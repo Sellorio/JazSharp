@@ -135,28 +135,32 @@ namespace JazSharp.MethodInfoSources
 
         internal static MethodInfo GetSpyForMethod(MethodInfo methodInfo)
         {
+            MethodInfo result;
+
             if (methodInfo.IsStatic)
             {
                 if (methodInfo.ReturnType != typeof(void))
                 {
-                    return typeof(SpyMethods).GetMethod("StaticFunc" + methodInfo.GetParameters().Length);
+                    result = typeof(SpyMethods).GetMethod("StaticFunc" + methodInfo.GetParameters().Length);
                 }
                 else
                 {
-                    return typeof(SpyMethods).GetMethod("StaticAction" + methodInfo.GetParameters().Length);
+                    result = typeof(SpyMethods).GetMethod("StaticAction" + methodInfo.GetParameters().Length);
                 }
             }
             else
             {
                 if (methodInfo.ReturnType != typeof(void))
                 {
-                    return typeof(SpyMethods).GetMethod("InstanceFunc" + methodInfo.GetParameters().Length);
+                    result = typeof(SpyMethods).GetMethod("InstanceFunc" + methodInfo.GetParameters().Length);
                 }
                 else
                 {
-                    return typeof(SpyMethods).GetMethod("InstanceAction" + methodInfo.GetParameters().Length);
+                    result = typeof(SpyMethods).GetMethod("InstanceAction" + methodInfo.GetParameters().Length);
                 }
             }
+
+            return result;
         }
     }
 }

@@ -114,5 +114,15 @@ namespace JazSharp
         {
             return new SpyExpect(spy);
         }
+
+        public static ValueExpect Expect(object value)
+        {
+            return new ValueExpect(value);
+        }
+
+        public static AnyMatcher Any<T>(bool exact = true)
+        {
+            return new AnyMatcher(typeof(T), exact);
+        }
     }
 }

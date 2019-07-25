@@ -31,31 +31,54 @@ namespace JazSharp.Expectations
                 return false;
             }
 
-            if (left.Equals(right))
-            {
-                return true;
-            }
-
             var leftType = left.GetType();
             var rightType = right.GetType();
 
-            if (_basicTypes.Contains(leftType) || _basicTypes.Contains(rightType))
+            var result =
+                CheckAnyMatcher(left, leftType, rightType) ??
+                CheckAnyMatcher(right, rightType, leftType) ??
+                CheckEquality(left, right) ??
+                CheckNotBasicType(leftType) ??
+                CheckNotBasicType(rightType) ??
+                CheckEnumerable(left, leftType, right, rightType, ref path) ??
+                CheckProperties(left, leftType, right, rightType, ref path) ??
+                true;
+
+            return result;
+        }
+
+        private static bool? CheckAnyMatcher(object object1, Type type1, Type type2)
+        {
+            if (type1 == typeof(AnyMatcher))
             {
-                if (leftType != rightType)
-                {
-                    return false;
-                }
+                var matcher = (AnyMatcher)object1;
+                return matcher.Exact ? matcher.Type == type2 : matcher.Type.IsAssignableFrom(type2);
             }
 
-            if (typeof(IEnumerable).IsAssignableFrom(leftType))
+            return null;
+        }
+
+        private static bool? CheckEquality(object object1, object object2)
+        {
+            return object1.Equals(object2) || object2.Equals(object1) ? (bool?)true : null;
+        }
+
+        private static bool? CheckNotBasicType(Type type)
+        {
+            return _basicTypes.Contains(type) ? (bool?)false : null;
+        }
+
+        private static bool? CheckEnumerable(object object1, Type type1, object object2, Type type2, ref string path)
+        {
+            if (typeof(IEnumerable).IsAssignableFrom(type1))
             {
-                if (!typeof(IEnumerable).IsAssignableFrom(rightType))
+                if (!typeof(IEnumerable).IsAssignableFrom(type2))
                 {
                     return false;
                 }
 
-                var leftList = ((IEnumerable)left).Cast<object>().ToList();
-                var rightList = ((IEnumerable)right).Cast<object>().ToList();
+                var leftList = ((IEnumerable)object1).Cast<object>().ToList();
+                var rightList = ((IEnumerable)object2).Cast<object>().ToList();
 
                 if (leftList.Count != rightList.Count)
                 {
@@ -74,21 +97,28 @@ namespace JazSharp.Expectations
                         return false;
                     }
                 }
+
+                return true;
             }
 
-            var leftProperties = leftType.GetProperties().OrderBy(x => x.Name).ToList();
-            var rightProperties = rightType.GetProperties().OrderBy(x => x.Name).ToList();
+            return null;
+        }
+
+        private static bool? CheckProperties(object object1, Type type1, object object2, Type type2, ref string path)
+        {
+            var properties1 = type1.GetProperties().OrderBy(x => x.Name).ToList();
+            var properties2 = type2.GetProperties().OrderBy(x => x.Name).ToList();
 
             // check that left and right both have the same properties (no extra, no missing)
-            if (!Enumerable.SequenceEqual(leftProperties.Select(x => x.Name), rightProperties.Select(x => x.Name)))
+            if (!Enumerable.SequenceEqual(properties1.Select(x => x.Name), properties2.Select(x => x.Name)))
             {
                 return false;
             }
 
-            for (var i = 0; i < leftProperties.Count; i++)
+            for (var i = 0; i < properties1.Count; i++)
             {
-                var childPath = path + "." + leftProperties[i].Name;
-                var result = DeepCompare(leftProperties[i].GetValue(left), rightProperties[i].GetValue(right), ref childPath);
+                var childPath = path + "." + properties1[i].Name;
+                var result = DeepCompare(properties1[i].GetValue(object1), properties2[i].GetValue(object2), ref childPath);
 
                 if (!result)
                 {
@@ -97,7 +127,7 @@ namespace JazSharp.Expectations
                 }
             }
 
-            return true;
+            return null;
         }
     }
 }

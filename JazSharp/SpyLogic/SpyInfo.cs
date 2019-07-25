@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace JazSharp.SpyLogic
 {
@@ -91,10 +92,9 @@ namespace JazSharp.SpyLogic
 
         internal static SpyInfo Get(string methodFullName)
         {
-            var indexOfSpace = methodFullName.IndexOf(' ');
-            var indexOfColon = methodFullName.IndexOf(':');
-            var classFullName = methodFullName.Substring(indexOfSpace + 1, indexOfColon - indexOfSpace - 1).Replace('/', '+');
-            var methodAsString = methodFullName.Substring(0, indexOfSpace).Replace("System.Void", "Void") + " " + methodFullName.Substring(indexOfColon + 2);
+            var unpacked = Regex.Match(methodFullName, @"([a-z0-9_]+\.)*([a-z0-9_]+) ([a-z0-9_.\/]+)::([a-z0-9_(),.]+)", RegexOptions.IgnoreCase);
+            var classFullName = unpacked.Groups[3].Value.Replace('/', '+');
+            var methodAsString = unpacked.Groups[2] + " " + unpacked.Groups[4];
 
             return _spies.FirstOrDefault(x => x.Method.ToString() == methodAsString && x.Method.DeclaringType.FullName == classFullName);
         }
