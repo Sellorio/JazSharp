@@ -20,7 +20,7 @@ namespace JazSharp.Spies
 
         public void Dispose()
         {
-            _spyInfo.Detach(_key);
+            _spyInfo.StopSpying(_key);
         }
     }
 }

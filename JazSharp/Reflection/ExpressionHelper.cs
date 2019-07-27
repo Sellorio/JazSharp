@@ -18,5 +18,10 @@ namespace JazSharp.Reflection
             var member = (MemberExpression)expression.Body;
             return (PropertyInfo)member.Member;
         }
+
+        internal static object GetValueFromExpression(Expression expression)
+        {
+            return expression == null ? null : Expression.Lambda(expression).Compile().DynamicInvoke();
+        }
     }
 }

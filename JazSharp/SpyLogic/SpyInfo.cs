@@ -1,6 +1,4 @@
-﻿using JazSharp.MethodInfoSources;
-using JazSharp.Reflection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,11 +6,9 @@ using System.Text.RegularExpressions;
 
 namespace JazSharp.SpyLogic
 {
-    internal class SpyInfo : IDisposable
+    internal class SpyInfo
     {
         private static readonly List<SpyInfo> _spies = new List<SpyInfo>();
-        private int _originalMethodPointer;
-        private bool _isAttached;
 
         internal MethodInfo Method { get; }
         internal Dictionary<object, bool> CallThroughMapping { get; } = new Dictionary<object, bool>();
@@ -23,29 +19,10 @@ namespace JazSharp.SpyLogic
 
         internal SpyInfo(MethodInfo method)
         {
-            Method = method;
+            Method = method.GetBaseDefinition();
         }
 
-        internal void Attach()
-        {
-            if (!_isAttached)
-            {
-                _originalMethodPointer = MethodPointerHelper.ReplaceMethod(Method, SpyMethods.GetSpyForMethod(Method));
-                _isAttached = true;
-            }
-        }
-
-        internal void Detach()
-        {
-            if (_isAttached)
-            {
-                MethodPointerHelper.RestoreMethod(Method, _originalMethodPointer);
-                _originalMethodPointer = default;
-                _isAttached = false;
-            }
-        }
-
-        internal void Detach(object key)
+        internal void StopSpying(object key)
         {
             if (CallThroughMapping.ContainsKey(key))
             {
@@ -71,11 +48,6 @@ namespace JazSharp.SpyLogic
             {
                 CallsLog.Remove(key);
             }
-
-            if (CallsLog.Count == 0)
-            {
-                Detach();
-            }
         }
 
         internal static SpyInfo Create(MethodInfo method)
@@ -87,6 +59,7 @@ namespace JazSharp.SpyLogic
 
         internal static SpyInfo Get(MethodInfo method)
         {
+            method = method.GetBaseDefinition();
             return _spies.FirstOrDefault(x => x.Method == method);
         }
 
@@ -97,11 +70,6 @@ namespace JazSharp.SpyLogic
             var methodAsString = unpacked.Groups[2] + " " + unpacked.Groups[4];
 
             return _spies.FirstOrDefault(x => x.Method.ToString() == methodAsString && x.Method.DeclaringType.FullName == classFullName);
-        }
-
-        public void Dispose()
-        {
-            Detach();
         }
     }
 }
