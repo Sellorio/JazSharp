@@ -124,5 +124,20 @@ namespace JazSharp
         {
             return new AnyMatcher(typeof(T), exact);
         }
+
+        public static void Invoke(Expression<Action> method)
+        {
+            if (method.Body is MethodCallExpression methodCall)
+            {
+                InvokationHelper.InvokeMethodWithSpySupport(
+                    methodCall.Method,
+                    ExpressionHelper.GetValueFromExpression(methodCall.Object),
+                    methodCall.Arguments.Select(ExpressionHelper.GetValueFromExpression).ToArray());
+            }
+            else
+            {
+                throw new ArgumentException("Method must only contain a method call.");
+            }
+        }
     }
 }

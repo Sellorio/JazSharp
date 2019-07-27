@@ -18,7 +18,6 @@ namespace JazSharp.SpyLogic
             if (spy == null)
             {
                 spy = SpyInfo.Create(method);
-                spy.Attach();
             }
 
             spy.CallsLog[key] = new List<object[]>();
