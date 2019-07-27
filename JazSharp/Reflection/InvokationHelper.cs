@@ -12,8 +12,27 @@ namespace JazSharp.Reflection
 
         internal static object InvokeMethodWithSpySupport(MethodInfo method, object obj, object[] parameters)
         {
-            var methodToCall = GetSpyEnabledCopy(method);
+            if (!method.IsStatic && obj == null)
+            {
+                throw new NullReferenceException();
+            }
+
+            var methodWithOverride = GetOverriddenMethod(method, obj);
+            var methodToCall = GetSpyEnabledCopy(methodWithOverride);
             return methodToCall.Invoke(null, new[] { obj }.Concat(parameters).ToArray());
+        }
+
+        private static MethodInfo GetOverriddenMethod(MethodInfo method, object obj)
+        {
+            if ((method.IsVirtual || method.IsAbstract) && obj != null)
+            {
+                return
+                    obj.GetType().GetMethod(
+                        method.Name,
+                        (method.IsPublic ? BindingFlags.Public : BindingFlags.NonPublic) | BindingFlags.Instance);
+            }
+
+            return method;
         }
 
         private static DynamicMethod GetSpyEnabledCopy(MethodInfo method)
@@ -25,16 +44,6 @@ namespace JazSharp.Reflection
         {
             var originalMethod = IntermediateLanguageHelper.ParseBody(method);
             var contextParaeters = method.IsStatic ? new Type[0] : new[] { method.DeclaringType };
-
-            //var result =
-            //    new DynamicMethod(
-            //        method.Name,
-            //        MethodAttributes.Public | MethodAttributes.Static,
-            //        CallingConventions.Standard,
-            //        method.ReturnType,
-            //        contextParaeters.Concat(method.GetParameters().Select(x => x.ParameterType)).ToArray(),
-            //        DynamicMethodHelper.Module,
-            //        true);
 
             var result =
                 new DynamicMethod(
@@ -95,8 +104,6 @@ namespace JazSharp.Reflection
                         throw new NotSupportedException("IL instruction is not supported.");
                 }
             }
-
-            DynamicMethodHelper.CreateDelegate(result);
 
             return result;
         }

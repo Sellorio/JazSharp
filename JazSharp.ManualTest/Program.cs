@@ -14,7 +14,7 @@ namespace JazSharp.ManualTest
             var instance = new Test();
             var str = "a string";
             var spy = Jaz.SpyOn(str, nameof(string.GetHashCode), new Type[0]);
-            Jaz.Invoke(() => instance.Method(str));
+            var result = Jaz.Invoke(() => instance.Method(str));
         }
 
         public class Test
@@ -31,8 +31,9 @@ namespace JazSharp.ManualTest
 }
 
 // Add support for:
-//  * Calling external/interop/native methods without wrapper
-//  * Handling virtual and abstract methods (use instance to get override implementation)
+//  * DEBUGGING!!
 
-// And.Throw
-// Jaz.CreateSpyObject<T>() (support interfaces (emit), abstract classes (emit + spies), concrete classes (spies))
+// Features to add:
+//  * And.Throw
+//  * Jaz.CreateSpyObject<T>() (support interfaces (emit), abstract classes (emit + spies), concrete classes (spies))
+//  * Full test framework: test discovery, test execution, expanding Expect to support the full set of asserts

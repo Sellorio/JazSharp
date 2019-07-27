@@ -125,11 +125,11 @@ namespace JazSharp
             return new AnyMatcher(typeof(T), exact);
         }
 
-        public static void Invoke(Expression<Action> method)
+        public static object Invoke(Expression<Action> method)
         {
             if (method.Body is MethodCallExpression methodCall)
             {
-                InvokationHelper.InvokeMethodWithSpySupport(
+                return InvokationHelper.InvokeMethodWithSpySupport(
                     methodCall.Method,
                     ExpressionHelper.GetValueFromExpression(methodCall.Object),
                     methodCall.Arguments.Select(ExpressionHelper.GetValueFromExpression).ToArray());

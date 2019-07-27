@@ -26,16 +26,6 @@ namespace JazSharp.Reflection
             var parameters = target.GetParameters();
             var contextParameters = target.IsStatic ? new Type[0] : new[] { target.DeclaringType };
 
-            //var result =
-            //    new DynamicMethod(
-            //        target.Name,
-            //        MethodAttributes.Public | MethodAttributes.Static,
-            //        CallingConventions.Standard,
-            //        target.ReturnType,
-            //        contextParameters.Concat(parameters.Select(x => x.ParameterType)).ToArray(),
-            //        DynamicMethodHelper.Module,
-            //        true);
-
             var result =
                 new DynamicMethod(
                     target.Name,
@@ -47,9 +37,9 @@ namespace JazSharp.Reflection
             var argsArrayVariable = codeGenerator.DeclareLocal(typeof(object[]));
 
             EmitInteger(codeGenerator, parameters.Length);
-            codeGenerator.Emit(OpCodes.Newarr);
+            codeGenerator.Emit(OpCodes.Newarr, typeof(object));
             codeGenerator.Emit(OpCodes.Stloc_0);
-
+            
             for (var i = 0; i < parameters.Length; i++)
             {
                 codeGenerator.Emit(OpCodes.Ldloc_0);
@@ -61,18 +51,28 @@ namespace JazSharp.Reflection
                     codeGenerator.Emit(OpCodes.Box);
                 }
 
-                codeGenerator.Emit(OpCodes.Stelem, parameters[0].ParameterType.MetadataToken);
+                codeGenerator.Emit(OpCodes.Stelem_Ref);
             }
 
             var handle = GCHandle.Alloc(target);
             codeGenerator.Emit(OpCodes.Ldc_I8, ((IntPtr)handle).ToInt64());
             codeGenerator.Emit(target.IsStatic ? OpCodes.Ldnull : OpCodes.Ldarg_0);
             codeGenerator.Emit(OpCodes.Ldloc_0);
-            codeGenerator.Emit(OpCodes.Callvirt, _spyExecutionMethod.MetadataToken);
-            codeGenerator.Emit(OpCodes.Ldc_I4_0);
-            codeGenerator.Emit(OpCodes.Ret);
+            codeGenerator.Emit(OpCodes.Call, _spyExecutionMethod);
 
-            DynamicMethodHelper.CreateDelegate(result);
+            if (target.ReturnType == typeof(void))
+            {
+            }
+            else if (target.ReturnType.IsValueType)
+            {
+                codeGenerator.Emit(OpCodes.Unbox_Any, target.ReturnType);
+            }
+            else
+            {
+                codeGenerator.Emit(OpCodes.Castclass, target.ReturnType);
+            }
+
+            codeGenerator.Emit(OpCodes.Ret);
 
             return result;
         }

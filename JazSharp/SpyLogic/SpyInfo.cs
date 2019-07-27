@@ -19,7 +19,7 @@ namespace JazSharp.SpyLogic
 
         internal SpyInfo(MethodInfo method)
         {
-            Method = method;
+            Method = method.GetBaseDefinition();
         }
 
         internal void StopSpying(object key)
@@ -59,6 +59,7 @@ namespace JazSharp.SpyLogic
 
         internal static SpyInfo Get(MethodInfo method)
         {
+            method = method.GetBaseDefinition();
             return _spies.FirstOrDefault(x => x.Method == method);
         }
 
