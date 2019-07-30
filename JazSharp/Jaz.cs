@@ -111,19 +111,14 @@ namespace JazSharp
             return new PropertySpy(propertyInfo, TestScopeHelper.GetTestName());
         }
 
-        public static SpyExpect Expect(Spy spy)
+        public static AnyMatcher Any<T>()
         {
-            return new SpyExpect(spy);
+            return new AnyMatcher(typeof(T), false);
         }
 
-        public static ValueExpect Expect(object value)
+        public static AnyMatcher InstanceOf<T>()
         {
-            return new ValueExpect(value);
-        }
-
-        public static AnyMatcher Any<T>(bool exact = true)
-        {
-            return new AnyMatcher(typeof(T), exact);
+            return new AnyMatcher(typeof(T), true);
         }
 
         public static object Invoke(Expression<Action> method)

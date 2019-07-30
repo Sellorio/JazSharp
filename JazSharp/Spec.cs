@@ -1,4 +1,6 @@
-﻿using JazSharp.TestSetup;
+﻿using JazSharp.Expectations;
+using JazSharp.Spies;
+using JazSharp.TestSetup;
 using System;
 using System.Threading.Tasks;
 
@@ -71,6 +73,16 @@ namespace JazSharp
         public static void fIt(string testDescription, Func<Task> test)
         {
             SpecHelper.RegisterTest(testDescription, test, true, false);
+        }
+
+        public static SpyExpect Expect(Spy spy)
+        {
+            return new SpyExpect(spy);
+        }
+
+        public static ValueExpect Expect(object value)
+        {
+            return new ValueExpect(value);
         }
     }
 }

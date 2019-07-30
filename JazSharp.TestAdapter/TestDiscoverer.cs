@@ -12,6 +12,7 @@ using System.Reflection;
 namespace JazSharp.TestAdapter
 {
     [FileExtension(".dll")]
+    [FileExtension(".exe")]
     [DefaultExecutorUri(TestAdapterConstants.ExecutorUriString)]
     [Export(typeof(ITestDiscoverer))]
     public sealed class TestDiscoverer : ITestDiscoverer
