@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("JazSharp.TestAdapter")]
 [assembly: InternalsVisibleTo("JazSharp.Tests")]
 [assembly: InternalsVisibleTo("JazSharp.ManualTest")]
 
