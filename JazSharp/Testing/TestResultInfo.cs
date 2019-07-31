@@ -1,4 +1,7 @@
-﻿namespace JazSharp.Testing
+﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+using System;
+
+namespace JazSharp.Testing
 {
     /// <summary>
     /// The results from a test execution.
@@ -11,10 +14,9 @@
         public Test Test { get; }
 
         /// <summary>
-        /// The result. <see langword="true" /> is success, <see langword="false"/> is failure
-        /// and <see langword="null"/> means the test was skipped.
+        /// The result.
         /// </summary>
-        public bool? Result { get; }
+        public TestOutcome Result { get; }
 
         /// <summary>
         /// The output of the test. This will contain exceptions that were thrown as well as
@@ -22,11 +24,17 @@
         /// </summary>
         public string Output { get; }
 
-        internal TestResultInfo(Test test, bool? result, string output)
+        /// <summary>
+        /// How long in the test took to run.
+        /// </summary>
+        public TimeSpan Duration { get; }
+
+        internal TestResultInfo(Test test, TestOutcome result, string output, TimeSpan duration)
         {
             Test = test;
             Result = result;
             Output = output;
+            Duration = duration;
         }
     }
 }

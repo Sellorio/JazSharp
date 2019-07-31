@@ -11,24 +11,21 @@ namespace JazSharp.TestAdapter
     [FileExtension(".dll")]
     [FileExtension(".exe")]
     [DefaultExecutorUri(TestAdapterConstants.ExecutorUriString)]
-    [Export(typeof(ITestDiscoverer))]
+    [ExtensionUri(TestAdapterConstants.ExecutorUriString)]
     public sealed class TestDiscoverer : ITestDiscoverer, IDisposable
     {
         private TestCollection _testCollection;
-
-        public Uri ExecutorUri => TestAdapterConstants.ExecutorUri;
 
         public void DiscoverTests(IEnumerable<string> sources, IDiscoveryContext discoveryContext, IMessageLogger logger, ITestCaseDiscoverySink discoverySink)
         {
             Dispose();
 
-            File.WriteAllText(@"C:\Users\seamillo\Desktop\TestDisc.txt", "Success");
             _testCollection = TestCollection.FromSources(sources);
 
             foreach (var test in _testCollection.Tests)
             {
                 discoverySink.SendTestCase(
-                    new TestCase(test.FullName, ExecutorUri, test.AssemblyFilename)
+                    new TestCase(test.FullName, TestAdapterConstants.ExecutorUri, test.AssemblyFilename)
                     {
                         CodeFilePath = test.SourceFilename,
                         LineNumber = test.LineNumber,

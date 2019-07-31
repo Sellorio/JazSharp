@@ -6,15 +6,13 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Optimize>false</Optimize>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="JazSharp.TestAdapter" Version="0.1.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="16.2.0" />
   </ItemGroup>
-
+  
   <ItemGroup>
+    <ProjectReference Include="..\JazSharp.TestAdapter\JazSharp.TestAdapter.csproj" />
     <ProjectReference Include="..\JazSharp\JazSharp.csproj" />
   </ItemGroup>
 

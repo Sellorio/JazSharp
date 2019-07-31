@@ -1,7 +1,9 @@
 ﻿using JazSharp.Reflection;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -96,8 +98,8 @@ namespace JazSharp.Testing
                 {
                     var result =
                         test.Execution is Action action
-                            ? await TestExecutionAsync(action)
-                            : await TestExecutionAsync((Func<Task>)test.Execution);
+                            ? await TestExecutionAsync(test, action)
+                            : await TestExecutionAsync(test, (Func<Task>)test.Execution);
 
                     results.Add(result);
                 }
@@ -113,8 +115,8 @@ namespace JazSharp.Testing
             var tasks =
                 Tests.Cast<RunnableTest>().Select(x =>
                     x.Execution is Action action
-                        ? TestExecutionAsync(action)
-                        : TestExecutionAsync((Func<Task>)x.Execution));
+                        ? TestExecutionAsync(x, action)
+                        : TestExecutionAsync(x, (Func<Task>)x.Execution));
 
             var result = Task.WhenAll(tasks);
             result.ContinueWith(_ => TestRunCompleted?.Invoke());
@@ -122,17 +124,26 @@ namespace JazSharp.Testing
             return result;
         }
 
-        private Task<TestResultInfo> TestExecutionAsync(Action test)
+        private Task<TestResultInfo> TestExecutionAsync(Test test, Action run)
         {
-            return TestExecutionAsync(() =>
-            {
-                test();
-                return Task.CompletedTask;
-            });
+            return TestExecutionAsync(
+                test,
+                () =>
+                {
+                    run();
+                    return Task.CompletedTask;
+                });
         }
 
-        private async Task<TestResultInfo> TestExecutionAsync(Func<Task> test)
+        private Task<TestResultInfo> TestExecutionAsync(Test test, Func<Task> run)
         {
+            Stopwatch timer = new Stopwatch();
+            
+            timer.Start();
+            run();
+            timer.Stop();
+
+            return Task.FromResult(new TestResultInfo(test, TestOutcome.Passed, "weeeeeee", timer.Elapsed));
             throw new NotImplementedException();
             //TestCompleted?.Invoke(result);
         }
@@ -192,6 +203,7 @@ namespace JazSharp.Testing
 
             foreach (string newPath in Directory.GetFiles(source, "*.*", SearchOption.AllDirectories))
             {
+                Directory.CreateDirectory(destination);
                 File.Copy(newPath, newPath.Replace(source, destination), true);
             }
         }
