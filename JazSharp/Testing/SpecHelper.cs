@@ -8,6 +8,7 @@ namespace JazSharp.Testing
     {
         private static Stack<DescribeStackItem> _describeStack = new Stack<DescribeStackItem>();
         private static List<Test> _tests = new List<Test>();
+        private static Type _testClass;
 
         internal static void PushDescribe(string description, bool isFocused, bool isExcluded)
         {
@@ -26,6 +27,7 @@ namespace JazSharp.Testing
 
             _tests.Add(
                 new Test(
+                    _testClass,
                     _describeStack.Select(x => x.Description).ToArray(),
                     description,
                     action,
@@ -38,12 +40,14 @@ namespace JazSharp.Testing
         internal static Test[] GetTestsInSpec(Type spec)
         {
             _describeStack = new Stack<DescribeStackItem>();
+            _testClass = spec;
             _tests = new List<Test>();
 
             Activator.CreateInstance(spec);
 
             var result = _tests.ToArray();
             _tests = null;
+            _testClass = null;
             _describeStack = null;
 
             return result;

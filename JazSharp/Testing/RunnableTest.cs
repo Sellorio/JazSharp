@@ -8,6 +8,7 @@ namespace JazSharp.Testing
         internal Delegate Execution { get; }
 
         internal RunnableTest(
+            Type testClass,
             IEnumerable<string> path,
             string description,
             Delegate execution,
@@ -15,7 +16,7 @@ namespace JazSharp.Testing
             bool isExcluded,
             string sourceFilename,
             int lineNumber)
-            : base(path, description, execution, isFocused, isExcluded, sourceFilename, lineNumber)
+            : base(testClass, path, description, execution, isFocused, isExcluded, sourceFilename, lineNumber)
         {
             Execution = execution;
         }

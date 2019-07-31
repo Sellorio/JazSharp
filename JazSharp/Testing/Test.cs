@@ -17,6 +17,11 @@ namespace JazSharp.Testing
         internal string AssemblyName { get; }
 
         /// <summary>
+        /// The class that defined this test.
+        /// </summary>
+        public Type TestClass { get; }
+
+        /// <summary>
         /// Whether or not the test (or any of it's ancestor Describes) has made it a focus. If any tests are
         /// focused, only focused tests are executed. If a test is excluded, it cannot be focused. Tests can
         /// be focused by using <see cref="Spec.fIt(string, Action, string, int)"/> or <see cref="Spec.fDescribe(string, Action)"/>.
@@ -66,6 +71,7 @@ namespace JazSharp.Testing
         public int LineNumber { get; }
 
         internal Test(
+            Type testClass,
             IEnumerable<string> path,
             string description,
             Delegate execution,
@@ -74,6 +80,7 @@ namespace JazSharp.Testing
             string sourceFilename,
             int lineNumber)
         {
+            TestClass = testClass;
             TestClassMetadataToken = execution.Method.DeclaringType.MetadataToken;
             TestMetadataToken = execution.Method.MetadataToken;
             AssemblyName = execution.Method.DeclaringType.Assembly.FullName;
@@ -96,7 +103,7 @@ namespace JazSharp.Testing
 
             var execution = method.CreateDelegate(method.ReturnType == typeof(void) ? typeof(Action) : typeof(Func<Task>));
 
-            return new RunnableTest(Path, Description, execution, IsFocused, IsExcluded, SourceFilename, LineNumber);
+            return new RunnableTest(TestClass, Path, Description, execution, IsFocused, IsExcluded, SourceFilename, LineNumber);
         }
     }
 }

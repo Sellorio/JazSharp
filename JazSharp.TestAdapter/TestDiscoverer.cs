@@ -25,11 +25,11 @@ namespace JazSharp.TestAdapter
             foreach (var test in _testCollection.Tests)
             {
                 discoverySink.SendTestCase(
-                    new TestCase(test.FullName, TestAdapterConstants.ExecutorUri, test.AssemblyFilename)
+                    new TestCase(test.TestClass.FullName + "._", TestAdapterConstants.ExecutorUri, test.AssemblyFilename)
                     {
                         CodeFilePath = test.SourceFilename,
                         LineNumber = test.LineNumber,
-                        DisplayName = test.Description
+                        DisplayName = test.FullName
                     });
             }
         }

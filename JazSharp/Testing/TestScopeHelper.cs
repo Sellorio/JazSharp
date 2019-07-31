@@ -7,8 +7,8 @@ namespace JazSharp.Testing
     {
         private static readonly string[] IgnoredAssemblyNames =
         {
-            "xunit.core",
-            "xunit.execution.dotnet",
+            "JazSharp",
+            "JazSharp.TestAdapter",
             "System.Private.CoreLib",
             "System.Threading.Thread"
         };
