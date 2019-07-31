@@ -1,4 +1,4 @@
-﻿using JazSharp.TestSetup;
+﻿using JazSharp.Testing;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
@@ -6,39 +6,43 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-
 namespace JazSharp.TestAdapter
 {
     [FileExtension(".dll")]
     [FileExtension(".exe")]
     [DefaultExecutorUri(TestAdapterConstants.ExecutorUriString)]
     [Export(typeof(ITestDiscoverer))]
-    public sealed class TestDiscoverer : ITestDiscoverer
+    public sealed class TestDiscoverer : ITestDiscoverer, IDisposable
     {
-        private List<Test> _tests;
+        private TestCollection _testCollection;
 
         public Uri ExecutorUri => TestAdapterConstants.ExecutorUri;
 
         public void DiscoverTests(IEnumerable<string> sources, IDiscoveryContext discoveryContext, IMessageLogger logger, ITestCaseDiscoverySink discoverySink)
         {
-            File.WriteAllText(@"C:\Users\seamillo\Desktop\TestDisc.txt", "Success");
-            _tests =
-                sources
-                    .Select(Assembly.LoadFrom)
-                    .SelectMany(x => x.GetTypes())
-                    .Where(x => x.IsAssignableFrom(typeof(Spec)) && !x.IsAbstract && x.GetConstructor(new Type[0]) != null)
-                    .SelectMany(SpecHelper.GetTestsInSpec)
-                    .ToList();
+            Dispose();
 
-            foreach (var test in _tests)
+            File.WriteAllText(@"C:\Users\seamillo\Desktop\TestDisc.txt", "Success");
+            _testCollection = TestCollection.FromSources(sources);
+
+            foreach (var test in _testCollection.Tests)
             {
                 discoverySink.SendTestCase(
-                    new TestCase(test.FullName, ExecutorUri, test.Execution.Method.DeclaringType.Assembly.Location)
+                    new TestCase(test.FullName, ExecutorUri, test.AssemblyFilename)
                     {
-                        DisplayName = test.FullName
+                        CodeFilePath = test.SourceFilename,
+                        LineNumber = test.LineNumber,
+                        DisplayName = test.Description
                     });
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_testCollection != null)
+            {
+                _testCollection.Dispose();
+                _testCollection = null;
             }
         }
     }

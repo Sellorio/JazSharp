@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JazSharp.Tests", "JazSharp.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JazSharp.ManualTest", "JazSharp.ManualTest\JazSharp.ManualTest.csproj", "{795AA6A0-50B4-4506-84A2-849F57CAECEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JazSharp.TestAdapter", "JazSharp.TestAdapter\JazSharp.TestAdapter.csproj", "{A0E5C36B-1465-473F-BA8B-43690F95356C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JazSharp.TestAdapter", "JazSharp.TestAdapter\JazSharp.TestAdapter.csproj", "{A0E5C36B-1465-473F-BA8B-43690F95356C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

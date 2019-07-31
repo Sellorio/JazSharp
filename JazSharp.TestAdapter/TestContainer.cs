@@ -7,7 +7,6 @@ using Microsoft.VisualStudio.TestWindow.Extensibility.Model;
 
 namespace JazSharp.TestAdapter
 {
-    [Export(typeof(ITestContainer))]
     public class TestContainer : ITestContainer
     {
         private readonly DateTime _sourceModifiedAt;

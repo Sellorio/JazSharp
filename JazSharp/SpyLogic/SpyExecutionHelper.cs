@@ -1,4 +1,5 @@
 ﻿using JazSharp.Reflection;
+using JazSharp.Testing;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -6,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace JazSharp.SpyLogic
 {
-    public static class SpyExecutionHelper
+    internal static class SpyExecutionHelper
     {
         private static readonly string[] _assemblyBlacklist =
         {
@@ -14,7 +15,7 @@ namespace JazSharp.SpyLogic
             "System.Threading.Thread"
         };
 
-        public static object HandleCall(long methodPointer, object instance, object[] parameters)
+        internal static object HandleCall(long methodPointer, object instance, object[] parameters)
         {
             var handle = (GCHandle)new IntPtr(methodPointer);
             var method = (MethodInfo)handle.Target;

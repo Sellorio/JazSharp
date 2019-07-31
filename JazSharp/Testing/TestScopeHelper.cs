@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Linq;
 
-namespace JazSharp
+namespace JazSharp.Testing
 {
     internal static class TestScopeHelper
     {

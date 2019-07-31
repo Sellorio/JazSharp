@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestWindow.Extensibility;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.TestWindow.Extensibility;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -9,7 +10,6 @@ using System.Reflection;
 namespace JazSharp.TestAdapter
 {
     [Export(typeof(ITestContainerDiscoverer))]
-    [Export(typeof(TestContainerDiscoverer))]
     public class TestContainerDiscoverer : ITestContainerDiscoverer, IDisposable
     {
         private readonly FileSystemWatcher _watcher = new FileSystemWatcher(Path.GetFullPath(string.Empty), "*.dll");
@@ -18,7 +18,8 @@ namespace JazSharp.TestAdapter
         public IEnumerable<ITestContainer> TestContainers { get; private set; }
         public event EventHandler TestContainersUpdated;
 
-        public TestContainerDiscoverer()
+        [ImportingConstructor]
+        public TestContainerDiscoverer([Import(typeof(SVsServiceProvider))] IServiceProvider serviceProvider)
         {
             _watcher.Changed += (s, e) => UpdateTestContainers();
             UpdateTestContainers();

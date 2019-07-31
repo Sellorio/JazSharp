@@ -19,9 +19,9 @@ namespace JazSharp.Reflection
             return new MethodBody(instructions.ToArray(), methodBody.LocalVariables);
         }
 
-        internal static Instruction[] GetMethodInstructions(Module module, byte[] binaryIl)
+        internal static Instruction2[] GetMethodInstructions(Module module, byte[] binaryIl)
         {
-            var instructions = new List<Instruction>();
+            var instructions = new List<Instruction2>();
 
             for (var i = 0; i < binaryIl.Length;)
             {
@@ -78,7 +78,7 @@ namespace JazSharp.Reflection
                         break;
                 }
 
-                instructions.Add(new Instruction(operation, operand));
+                instructions.Add(new Instruction2(operation, operand));
             }
 
             return instructions.ToArray();

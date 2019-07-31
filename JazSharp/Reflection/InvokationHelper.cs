@@ -65,7 +65,7 @@ namespace JazSharp.Reflection
                 if (instruction.Operation.OperandType == OperandType.InlineMethod)
                 {
                     var spyMethod = SpyMethodHelper.GetSpyMethod((MethodInfo)instruction.Operand);
-                    outputInstruction = new Instruction(instruction.Operation, spyMethod);
+                    outputInstruction = new Instruction2(instruction.Operation, spyMethod);
                 }
 
                 switch (outputInstruction.Operand)

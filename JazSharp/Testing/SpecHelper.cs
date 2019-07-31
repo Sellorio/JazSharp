@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace JazSharp.TestSetup
+namespace JazSharp.Testing
 {
     internal static class SpecHelper
     {
@@ -19,12 +19,20 @@ namespace JazSharp.TestSetup
             });
         }
 
-        internal static void RegisterTest(string description, Delegate action, bool isFocused, bool isExcluded)
+        internal static void RegisterTest(string description, Delegate action, bool isFocused, bool isExcluded, string sourceFilename, int lineNumber)
         {
             var actualIsExcluded = isExcluded || _describeStack.Any(x => x.IsExcluded);
             var actualIsFocused = !actualIsExcluded && isFocused || _describeStack.Any(x => x.IsFocused);
 
-            _tests.Add(new Test(_describeStack.Select(x => x.Description).ToArray(), description, action, actualIsFocused, actualIsExcluded));
+            _tests.Add(
+                new Test(
+                    _describeStack.Select(x => x.Description).ToArray(),
+                    description,
+                    action,
+                    actualIsFocused,
+                    actualIsExcluded,
+                    sourceFilename,
+                    lineNumber));
         }
 
         internal static Test[] GetTestsInSpec(Type spec)

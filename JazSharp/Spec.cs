@@ -1,7 +1,8 @@
 ﻿using JazSharp.Expectations;
 using JazSharp.Spies;
-using JazSharp.TestSetup;
+using JazSharp.Testing;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 #pragma warning disable IDE1006 // Naming Styles
@@ -45,34 +46,34 @@ namespace JazSharp
             definition();
         }
 
-        public static void It(string testDescription, Action test)
+        public static void It(string testDescription, Action test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
-            SpecHelper.RegisterTest(testDescription, test, false, false);
+            SpecHelper.RegisterTest(testDescription, test, false, false, sourceFile, lineNumber);
         }
 
-        public static void xIt(string testDescription, Action test)
+        public static void xIt(string testDescription, Action test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
-            SpecHelper.RegisterTest(testDescription, test, false, true);
+            SpecHelper.RegisterTest(testDescription, test, false, true, sourceFile, lineNumber);
         }
 
-        public static void fIt(string testDescription, Action test)
+        public static void fIt(string testDescription, Action test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
-            SpecHelper.RegisterTest(testDescription, test, true, false);
+            SpecHelper.RegisterTest(testDescription, test, true, false, sourceFile, lineNumber);
         }
 
-        public static void It(string testDescription, Func<Task> test)
+        public static void It(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
-            SpecHelper.RegisterTest(testDescription, test, false, false);
+            SpecHelper.RegisterTest(testDescription, test, false, false, sourceFile, lineNumber);
         }
 
-        public static void xIt(string testDescription, Func<Task> test)
+        public static void xIt(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
-            SpecHelper.RegisterTest(testDescription, test, false, true);
+            SpecHelper.RegisterTest(testDescription, test, false, true, sourceFile, lineNumber);
         }
 
-        public static void fIt(string testDescription, Func<Task> test)
+        public static void fIt(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
-            SpecHelper.RegisterTest(testDescription, test, true, false);
+            SpecHelper.RegisterTest(testDescription, test, true, false, sourceFile, lineNumber);
         }
 
         public static SpyExpect Expect(Spy spy)
