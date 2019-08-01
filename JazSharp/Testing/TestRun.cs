@@ -1,4 +1,5 @@
 ﻿using JazSharp.Reflection;
+using JazSharp.Testing.ExecutionContext;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -6,7 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,8 +20,9 @@ namespace JazSharp.Testing
     public sealed class TestRun : IDisposable
     {
         private readonly AssemblyContext _assemblyContext;
+        private readonly MethodInfo _setupTestExecutionContextMethod;
+        private readonly MethodInfo _clearTestExecutionContextMethod;
         private readonly IEnumerable<string> _temporaryDirectories;
-        private bool _executeInParallel;
         private bool _isExecuting;
         private CancellationTokenSource _cancellationTokenSource;
 
@@ -42,28 +43,15 @@ namespace JazSharp.Testing
         /// </summary>
         public event Action TestRunCompleted;
 
-        /// <summary>
-        /// Whether or not to execute the tests in parallel.
-        /// </summary>
-        public bool ExecuteInParallel
-        {
-            get => _executeInParallel;
-            set
-            {
-                if (_isExecuting)
-                {
-                    throw new InvalidOperationException("Cannot change test run settings while tests are executing.");
-                }
-
-                _executeInParallel = value;
-            }
-        }
-
         private TestRun(AssemblyContext assemblyContext, IEnumerable<RunnableTest> tests, IEnumerable<string> temporaryDirectories)
         {
             _assemblyContext = assemblyContext;
             _temporaryDirectories = temporaryDirectories;
             Tests = ImmutableArray.CreateRange<Test>(tests);
+
+            var jaz = _assemblyContext.JazSharp.GetType(typeof(Jaz).Namespace + "." + typeof(Jaz).Name);
+            _setupTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.SetupTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
+            _clearTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.ClearTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         /// <summary>
@@ -80,7 +68,7 @@ namespace JazSharp.Testing
             _isExecuting = true;
             _cancellationTokenSource = new CancellationTokenSource();
 
-            return ExecuteInParallel ? ExecuteParallelAsync() : ExecuteSequenceAsync();
+            return ExecuteSequenceAsync();
         }
 
         /// <summary>
@@ -132,20 +120,6 @@ namespace JazSharp.Testing
             });
         }
 
-        private Task<TestResultInfo[]> ExecuteParallelAsync()
-        {
-            var tasks =
-                Tests.Cast<RunnableTest>().Select(x =>
-                    x.Execution is Action action
-                        ? TestExecutionAsync(x, action)
-                        : TestExecutionAsync(x, (Func<Task>)x.Execution));
-
-            var result = Task.WhenAll(tasks);
-            result.ContinueWith(_ => TestRunCompleted?.Invoke());
-
-            return result;
-        }
-
         private Task<TestResultInfo> TestExecutionAsync(Test test, Action run)
         {
             return TestExecutionAsync(
@@ -164,17 +138,20 @@ namespace JazSharp.Testing
                 return null;
             }
 
-            var timer = new Stopwatch();
-            var output = new StringBuilder();
-            var testResult = TestResult.Passed;
+            Stopwatch stopwatch = new Stopwatch();
+            StringBuilder output = new StringBuilder();
+            TestResult testResult;
+
+            await Jaz.CurrentTestSemaphore.WaitAsync();
+            _setupTestExecutionContextMethod.Invoke(null, new object[] { test.FullName, output });
 
             try
             {
-                timer.Start();
+                stopwatch.Start();
                 await run();
-                timer.Stop();
-
+                stopwatch.Stop();
                 output.Append("\r\nTest completed successfully.");
+                testResult = TestResult.Passed;
             }
             catch (Exception ex)
             {
@@ -182,7 +159,10 @@ namespace JazSharp.Testing
                 testResult = TestResult.Failed;
             }
 
-            var result = new TestResultInfo(test, testResult, output.ToString(), timer.Elapsed);
+            _clearTestExecutionContextMethod.Invoke(null, new object[0]);
+            Jaz.CurrentTestSemaphore.Release();
+
+            var result = new TestResultInfo(test, testResult, output.ToString(), stopwatch.Elapsed);
 
             try
             {
@@ -233,13 +213,13 @@ namespace JazSharp.Testing
                 }
             }
 
-            var assemblyContext = new AssemblyContext();
+            var assemblyContext = new AssemblyContext(temporaryDirectories.ToArray());
             var executionReadyAssemblies = sources.Select(assemblyContext.LoadFromAssemblyPath).ToList();
 
             return
                 new TestRun(
                     assemblyContext,
-                    testCollection.Tests.Select(x => x.Prepare(executionReadyAssemblies.First(y => y.FullName == x.AssemblyName))),
+                    testCollection.Tests.Select(x => x.Prepare(executionReadyAssemblies.First(y => y.FullName == x.AssemblyName), assemblyContext.JazSharp)),
                     temporaryDirectories);
         }
 

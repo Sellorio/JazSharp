@@ -95,10 +95,16 @@ namespace JazSharp.Reflection
             {
                 if (!DoNotWrapAssemblies.Contains(calledMethod.DeclaringType.Module.Assembly.Name.Name))
                 {
+                    var isFunc = calledMethod.ReturnType.FullName != "System.Void";
                     var parameterCount = !calledMethod.HasThis ? calledMethod.Parameters.Count : calledMethod.Parameters.Count + 1;
-                    var entryMethodName = (calledMethod.ReturnType.FullName == "System.Void" ? "Action" : "Func") + parameterCount;
+                    var entryMethodName = (isFunc ? "Func" : "Action") + parameterCount;
                     var entryMethod = typeof(SpyEntryPoints).GetMethod(entryMethodName, BindingFlags.Static | BindingFlags.Public);
                     var genericMethod = new GenericInstanceMethod(module.ImportReference(entryMethod));
+
+                    if (isFunc)
+                    {
+                        genericMethod.GenericArguments.Add(calledMethod.ReturnType);
+                    }
 
                     if (calledMethod.HasThis)
                     {
@@ -107,7 +113,16 @@ namespace JazSharp.Reflection
 
                     foreach (var parameter in calledMethod.Parameters)
                     {
-                        genericMethod.GenericArguments.Add(parameter.ParameterType);
+                        if (parameter.ParameterType.IsGenericParameter)
+                        {
+                            // This will fail on generic structs.
+                            // It may be possible parse all the IL and identify the exact type of the parameter.
+                            genericMethod.GenericArguments.Add(module.ImportReference(typeof(object)));
+                        }
+                        else
+                        {
+                            genericMethod.GenericArguments.Add(parameter.ParameterType);
+                        }
                     }
 
                     if (!replacedMethods.Contains(calledMethod))

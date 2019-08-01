@@ -71,5 +71,10 @@ namespace JazSharp.SpyLogic
 
             return _spies.FirstOrDefault(x => x.Method.ToString() == methodAsString && x.Method.DeclaringType.FullName == classFullName);
         }
+
+        internal static void Clear()
+        {
+            _spies.Clear();
+        }
     }
 }

@@ -92,10 +92,15 @@ namespace JazSharp.Testing
             LineNumber = lineNumber;
         }
 
-        internal RunnableTest Prepare(Assembly executionReadyAssembly)
+        internal RunnableTest Prepare(Assembly executionReadyAssembly, Assembly jasSharpAssembly)
         {
             var module = executionReadyAssembly.Modules.First();
-            var execution = SpecHelper.GetPreparedTestExecution(module.ResolveType(TestClass.MetadataToken), TestMetadataToken);
+            var getPreparedTestExecutionMethod =
+                jasSharpAssembly
+                    .GetType(typeof(SpecHelper).Namespace + "." + typeof(SpecHelper).Name)
+                    .GetMethod(nameof(SpecHelper.GetPreparedTestExecution), BindingFlags.Static | BindingFlags.NonPublic);
+
+            var execution = (Delegate)getPreparedTestExecutionMethod.Invoke(null, new object[] { module.ResolveType(TestClass.MetadataToken), TestMetadataToken });
 
             return new RunnableTest(TestClass, Path, Description, execution, IsFocused, IsExcluded, SourceFilename, LineNumber);
         }

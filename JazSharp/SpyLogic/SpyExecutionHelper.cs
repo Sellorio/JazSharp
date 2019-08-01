@@ -1,9 +1,5 @@
-﻿using JazSharp.Reflection;
-using JazSharp.Testing;
-using System;
+﻿using System;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace JazSharp.SpyLogic
 {
@@ -15,36 +11,48 @@ namespace JazSharp.SpyLogic
             "System.Threading.Thread"
         };
 
-        internal static object HandleCall(long methodPointer, object instance, object[] parameters)
+        internal static object HandleCall(object[] parameters, bool isFunc)
         {
-            var handle = (GCHandle)new IntPtr(methodPointer);
-            var method = (MethodInfo)handle.Target;
+            var method = OriginalMethodHelper.GetOrignalMethod(parameters.Length, isFunc);
 
-            if (!method.IsStatic && instance == null)
+            if (method == null)
             {
-                throw new NullReferenceException();
+                throw new JazSpyException("JazSharp failed to determine the original method called before spy wrappers were applied.");
+            }
+
+            object instance = null;
+
+            if (!method.IsStatic)
+            {
+                instance = parameters[0];
+                parameters = parameters.Skip(1).ToArray();
+
+                if (instance == null)
+                {
+                    throw new NullReferenceException();
+                }
             }
 
             var spyInfo = SpyInfo.Get(method);
 
             if (spyInfo == null)
             {
-                return CallThrough(method, instance, parameters);
+                return method.Invoke(instance, parameters);
             }
 
-            var key = spyInfo.Method.IsStatic ? TestScopeHelper.GetTestName() : instance;
+            var key = spyInfo.Method.IsStatic ? string.Empty : instance;
 
             // spy not configured for this instance/static scope
             if (!spyInfo.CallsLog.ContainsKey(key))
             {
-                return CallThrough(method, instance, parameters);
+                return method.Invoke(instance, parameters);
             }
 
             spyInfo.CallsLog[key].Add(parameters);
 
             var result =
                 spyInfo.CallThroughMapping[key]
-                    ? CallThrough(method, instance, parameters)
+                    ? method.Invoke(instance, parameters)
                     : HandleReturnValue(spyInfo, key);
 
             spyInfo.CallbackMapping[key]?.Invoke(parameters);
@@ -74,19 +82,6 @@ namespace JazSharp.SpyLogic
             }
 
             return GetDefaultValue(spyInfo.Method.ReturnType);
-        }
-
-        private static object CallThrough(MethodInfo method, object instance, object[] parameters)
-        {
-            if ((method.MethodImplementationFlags & MethodImplAttributes.InternalCall) == 0     // exclude dllimport functions
-                || _assemblyBlacklist.Contains(method.DeclaringType.Assembly.GetName().Name))   // exclude system functions
-            {
-                return method.Invoke(instance, parameters);
-            }
-            else
-            {
-                return InvokationHelper.InvokeMethodWithSpySupport(method, instance, parameters);
-            }
         }
 
         private static object GetDefaultValue(Type type)
