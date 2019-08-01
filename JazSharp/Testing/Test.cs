@@ -12,7 +12,6 @@ namespace JazSharp.Testing
     /// </summary>
     public class Test
     {
-        internal int TestClassMetadataToken { get; }
         internal int TestMetadataToken { get; }
         internal string AssemblyName { get; }
 
@@ -81,7 +80,6 @@ namespace JazSharp.Testing
             int lineNumber)
         {
             TestClass = testClass;
-            TestClassMetadataToken = execution.Method.DeclaringType.MetadataToken;
             TestMetadataToken = execution.Method.MetadataToken;
             AssemblyName = execution.Method.DeclaringType.Assembly.FullName;
             AssemblyFilename = execution.Method.DeclaringType.Assembly.Location;
@@ -96,12 +94,8 @@ namespace JazSharp.Testing
 
         internal RunnableTest Prepare(Assembly executionReadyAssembly)
         {
-            var method =
-                executionReadyAssembly
-                    .GetTypes().First(x => x.MetadataToken == TestClassMetadataToken)
-                    .GetMethods().First(x => x.MetadataToken == TestMetadataToken);
-
-            var execution = method.CreateDelegate(method.ReturnType == typeof(void) ? typeof(Action) : typeof(Func<Task>));
+            var module = executionReadyAssembly.Modules.First();
+            var execution = SpecHelper.GetPreparedTestExecution(module.ResolveType(TestClass.MetadataToken), TestMetadataToken);
 
             return new RunnableTest(TestClass, Path, Description, execution, IsFocused, IsExcluded, SourceFilename, LineNumber);
         }

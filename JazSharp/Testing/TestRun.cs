@@ -1,5 +1,4 @@
 ﻿using JazSharp.Reflection;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -7,6 +6,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace JazSharp.Testing
@@ -17,9 +19,11 @@ namespace JazSharp.Testing
     /// </summary>
     public sealed class TestRun : IDisposable
     {
+        private readonly AssemblyContext _assemblyContext;
         private readonly IEnumerable<string> _temporaryDirectories;
         private bool _executeInParallel;
         private bool _isExecuting;
+        private CancellationTokenSource _cancellationTokenSource;
 
         /// <summary>
         /// The tests planned for execution.
@@ -55,8 +59,9 @@ namespace JazSharp.Testing
             }
         }
 
-        private TestRun(IEnumerable<RunnableTest> tests, IEnumerable<string> temporaryDirectories)
+        private TestRun(AssemblyContext assemblyContext, IEnumerable<RunnableTest> tests, IEnumerable<string> temporaryDirectories)
         {
+            _assemblyContext = assemblyContext;
             _temporaryDirectories = temporaryDirectories;
             Tests = ImmutableArray.CreateRange<Test>(tests);
         }
@@ -73,8 +78,17 @@ namespace JazSharp.Testing
             }
 
             _isExecuting = true;
+            _cancellationTokenSource = new CancellationTokenSource();
 
             return ExecuteInParallel ? ExecuteParallelAsync() : ExecuteSequenceAsync();
+        }
+
+        /// <summary>
+        /// Cancels the active test run (if any). This call is ignored if no test run is in progress.
+        /// </summary>
+        public void Cancel()
+        {
+            _cancellationTokenSource?.Cancel();
         }
 
         /// <summary>
@@ -82,9 +96,12 @@ namespace JazSharp.Testing
         /// </summary>
         public void Dispose()
         {
+            //TODO: Unload assembly load context here
+
             foreach (var directory in _temporaryDirectories)
             {
-                Directory.Delete(directory, true);
+                //TODO: Delete temporary directory once assembly is unloaded.
+                //Directory.Delete(directory, true);
             }
         }
 
@@ -102,6 +119,11 @@ namespace JazSharp.Testing
                             : await TestExecutionAsync(test, (Func<Task>)test.Execution);
 
                     results.Add(result);
+
+                    if (_cancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                        return results.ToArray();
+                    }
                 }
 
                 TestRunCompleted?.Invoke();
@@ -135,17 +157,42 @@ namespace JazSharp.Testing
                 });
         }
 
-        private Task<TestResultInfo> TestExecutionAsync(Test test, Func<Task> run)
+        private async Task<TestResultInfo> TestExecutionAsync(Test test, Func<Task> run)
         {
-            Stopwatch timer = new Stopwatch();
-            
-            timer.Start();
-            run();
-            timer.Stop();
+            if (_cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                return null;
+            }
 
-            return Task.FromResult(new TestResultInfo(test, TestOutcome.Passed, "weeeeeee", timer.Elapsed));
-            throw new NotImplementedException();
-            //TestCompleted?.Invoke(result);
+            var timer = new Stopwatch();
+            var output = new StringBuilder();
+            var testResult = TestResult.Passed;
+
+            try
+            {
+                timer.Start();
+                await run();
+                timer.Stop();
+
+                output.Append("\r\nTest completed successfully.");
+            }
+            catch (Exception ex)
+            {
+                output.Append("\r\n").Append(ex.ToString());
+                testResult = TestResult.Failed;
+            }
+
+            var result = new TestResultInfo(test, testResult, output.ToString(), timer.Elapsed);
+
+            try
+            {
+                TestCompleted?.Invoke(result);
+            }
+            catch
+            {
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -186,10 +233,12 @@ namespace JazSharp.Testing
                 }
             }
 
-            var executionReadyAssemblies = sources.Select(Assembly.LoadFrom).ToList();
+            var assemblyContext = new AssemblyContext();
+            var executionReadyAssemblies = sources.Select(assemblyContext.LoadFromAssemblyPath).ToList();
 
             return
                 new TestRun(
+                    assemblyContext,
                     testCollection.Tests.Select(x => x.Prepare(executionReadyAssemblies.First(y => y.FullName == x.AssemblyName))),
                     temporaryDirectories);
         }

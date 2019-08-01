@@ -4,8 +4,7 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.IO;
+
 namespace JazSharp.TestAdapter
 {
     [FileExtension(".dll")]
@@ -24,13 +23,7 @@ namespace JazSharp.TestAdapter
 
             foreach (var test in _testCollection.Tests)
             {
-                discoverySink.SendTestCase(
-                    new TestCase(test.TestClass.FullName + "._", TestAdapterConstants.ExecutorUri, test.AssemblyFilename)
-                    {
-                        CodeFilePath = test.SourceFilename,
-                        LineNumber = test.LineNumber,
-                        DisplayName = test.FullName
-                    });
+                discoverySink.SendTestCase(test.ToTestCase());
             }
         }
 

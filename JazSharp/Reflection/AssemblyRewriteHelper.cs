@@ -4,6 +4,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace JazSharp.Reflection
 {
@@ -11,68 +12,56 @@ namespace JazSharp.Reflection
     {
         private static readonly string[] DoNotWrapAssemblies =
         {
-            typeof(Jaz).Assembly.FullName
+            typeof(Jaz).Assembly.GetName().Name
         };
 
         private static readonly string[] DoNotRecurseAssemblies =
         {
-            typeof(Jaz).Assembly.FullName,
-            typeof(string).Assembly.FullName
+            "System.Private.CoreLib",
+            typeof(Jaz).Assembly.GetName().Name
         };
 
         internal static void RewriteAssembly(string filename, TestCollection forTests)
         {
             var anyFocused = forTests.Tests.Any(x => x.IsFocused);
-            var assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true });
 
-            var testMethodDefinitions =
-                forTests.Tests
-                    .Where(x => (!anyFocused || x.IsFocused) && !x.IsExcluded && x.AssemblyName == assembly.FullName)
-                    .Select(x =>
-                        assembly.MainModule
-                            .Types.First(y => y.MetadataToken.ToInt32() == x.TestClassMetadataToken)
-                            .Methods.First(y => y.MetadataToken.ToInt32() == x.TestMetadataToken))
-                    .ToList();
-            
-            var processedMethods = new List<MethodDefinition>();
-
-            foreach (var testMethodDefinition in testMethodDefinitions)
+            using (var assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true, ReadSymbols = true }))
             {
-                RewriteAssembly(testMethodDefinition, processedMethods);
-            }
+                foreach (var test in forTests.Tests.Where(x => (!anyFocused || x.IsFocused) && !x.IsExcluded && x.AssemblyName == assembly.FullName))
+                {
+                    var testMethod = (MethodDefinition)assembly.MainModule.LookupToken(test.TestMetadataToken);
+                    RewriteAssembly(testMethod, new List<MethodDefinition>());
+                }
 
-            assembly.Write(filename);
+                assembly.Write(new WriterParameters { WriteSymbols = true });
+            }
         }
 
         private static void RewriteAssembly(MethodDefinition method, List<MethodDefinition> processedMethods)
         {
-            var dummyVariable = method.ReturnType.FullName != "System.Void" ? new VariableDefinition(method.ReturnType) : null;
-            method.Body.Variables.Add(dummyVariable);
-            var ilProcessor = method.Body.GetILProcessor();
-            var replacedMethods = new List<MethodDefinition>();
+            VariableDefinition dummyVariable = null;
 
-            foreach (var instruction in method.Body.Instructions)
+            if (method.ReturnType.FullName != "System.Void")
             {
-                if (instruction.Operand is MethodDefinition calledMethod)
+                dummyVariable = new VariableDefinition(method.ReturnType);
+                method.Body.Variables.Add(dummyVariable);
+            }
+
+            var ilProcessor = method.Body.GetILProcessor();
+            var replacedMethods = new List<MethodReference>();
+
+            for (var i = 0; i < method.Body.Instructions.Count; i++)
+            {
+                var instruction = method.Body.Instructions[i];
+
+                if (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)
                 {
-                    if (!DoNotWrapAssemblies.Contains(calledMethod.DeclaringType.Module.Assembly.FullName))
+                    var calledMethod = (MethodReference)instruction.Operand;
+                    var replacement = GetSpyInstruction(method.Module, calledMethod, replacedMethods);
+
+                    if (replacement != null)
                     {
-                        var parameterCount = calledMethod.IsStatic ? calledMethod.Parameters.Count : calledMethod.Parameters.Count + 1;
-                        var entryMethodName = (calledMethod.ReturnType.FullName == "System.Void" ? "Action" : "Func") + parameterCount;
-                        var genericMethod = new GenericInstanceMethod(method.Module.ImportReference(typeof(SpyEntryPoints).GetMethod(entryMethodName)));
-
-                        if (!calledMethod.IsStatic)
-                        {
-                            genericMethod.GenericArguments.Add(calledMethod.DeclaringType);
-                        }
-
-                        foreach (var parameter in calledMethod.Parameters)
-                        {
-                            genericMethod.GenericArguments.Add(parameter.ParameterType);
-                        }
-
-                        replacedMethods.Add(calledMethod);
-                        ilProcessor.Replace(instruction, Instruction.Create(OpCodes.Call, genericMethod));
+                        ilProcessor.Replace(instruction, replacement);
                     }
                 }
             }
@@ -84,20 +73,54 @@ namespace JazSharp.Reflection
 
             if (dummyVariable != null)
             {
-                ilProcessor.Append(Instruction.Create(OpCodes.Ldloc, dummyVariable.Index));
+                ilProcessor.Append(Instruction.Create(OpCodes.Ldloc, dummyVariable));
             }
 
             ilProcessor.Append(Instruction.Create(OpCodes.Ret));
 
             processedMethods.Add(method);
 
-            foreach (var replacedMethod in replacedMethods.Except(processedMethods))
+            foreach (var replacedMethod in replacedMethods.OfType<MethodDefinition>().Except(processedMethods))
             {
-                if (!DoNotRecurseAssemblies.Contains(replacedMethod.DeclaringType.Module.Assembly.FullName))
+                if (!DoNotRecurseAssemblies.Contains(replacedMethod.DeclaringType.Module.Assembly.Name.Name))
                 {
                     RewriteAssembly(replacedMethod, processedMethods);
                 }
             }
+        }
+
+        private static Instruction GetSpyInstruction(ModuleDefinition module, MethodReference calledMethod, List<MethodReference> replacedMethods)
+        {
+            if (calledMethod != null)
+            {
+                if (!DoNotWrapAssemblies.Contains(calledMethod.DeclaringType.Module.Assembly.Name.Name))
+                {
+                    var parameterCount = !calledMethod.HasThis ? calledMethod.Parameters.Count : calledMethod.Parameters.Count + 1;
+                    var entryMethodName = (calledMethod.ReturnType.FullName == "System.Void" ? "Action" : "Func") + parameterCount;
+                    var entryMethod = typeof(SpyEntryPoints).GetMethod(entryMethodName, BindingFlags.Static | BindingFlags.Public);
+                    var genericMethod = new GenericInstanceMethod(module.ImportReference(entryMethod));
+
+                    if (calledMethod.HasThis)
+                    {
+                        genericMethod.GenericArguments.Add(calledMethod.DeclaringType);
+                    }
+
+                    foreach (var parameter in calledMethod.Parameters)
+                    {
+                        genericMethod.GenericArguments.Add(parameter.ParameterType);
+                    }
+
+                    if (!replacedMethods.Contains(calledMethod))
+                    {
+                        calledMethod = calledMethod.Resolve();
+                        replacedMethods.Add(calledMethod);
+                    }
+
+                    return Instruction.Create(OpCodes.Call, genericMethod);
+                }
+            }
+
+            return null;
         }
     }
 }

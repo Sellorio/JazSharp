@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
-using System;
+﻿using System;
 
 namespace JazSharp.Testing
 {
@@ -16,7 +15,7 @@ namespace JazSharp.Testing
         /// <summary>
         /// The result.
         /// </summary>
-        public TestOutcome Result { get; }
+        public TestResult Result { get; }
 
         /// <summary>
         /// The output of the test. This will contain exceptions that were thrown as well as
@@ -29,7 +28,7 @@ namespace JazSharp.Testing
         /// </summary>
         public TimeSpan Duration { get; }
 
-        internal TestResultInfo(Test test, TestOutcome result, string output, TimeSpan duration)
+        internal TestResultInfo(Test test, TestResult result, string output, TimeSpan duration)
         {
             Test = test;
             Result = result;

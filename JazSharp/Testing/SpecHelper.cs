@@ -6,8 +6,9 @@ namespace JazSharp.Testing
 {
     internal static class SpecHelper
     {
-        private static Stack<DescribeStackItem> _describeStack = new Stack<DescribeStackItem>();
-        private static List<Test> _tests = new List<Test>();
+        private static Stack<DescribeStackItem> _describeStack;
+        private static List<Test> _tests;
+        private static List<Delegate> _executions;
         private static Type _testClass;
 
         internal static void PushDescribe(string description, bool isFocused, bool isExcluded)
@@ -35,6 +36,11 @@ namespace JazSharp.Testing
                     actualIsExcluded,
                     sourceFilename,
                     lineNumber));
+
+            if (_executions != null)
+            {
+                _executions.Add(action);
+            }
         }
 
         internal static Test[] GetTestsInSpec(Type spec)
@@ -49,6 +55,26 @@ namespace JazSharp.Testing
             _tests = null;
             _testClass = null;
             _describeStack = null;
+
+            return result;
+        }
+
+        internal static Delegate GetPreparedTestExecution(Type spec, int testMetadataToken)
+        {
+            _executions = new List<Delegate>();
+            var tests = GetTestsInSpec(spec);
+            Delegate result = null;
+
+            for (var i = 0; i < tests.Length; i++)
+            {
+                if (tests[i].TestMetadataToken == testMetadataToken)
+                {
+                    result = _executions[i];
+                    break;
+                }
+            }
+
+            _executions = null;
 
             return result;
         }

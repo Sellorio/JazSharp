@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using System.Collections.Generic;
+using System.Linq;
+using VisualStudioTestResult = Microsoft.VisualStudio.TestPlatform.ObjectModel.TestResult;
 
 namespace JazSharp.TestAdapter
 {
@@ -11,33 +13,61 @@ namespace JazSharp.TestAdapter
     [ExtensionUri(TestAdapterConstants.ExecutorUriString)]
     public class TestExecutor : ITestExecutor
     {
+        private TestRun _testRun;
+
         public void Cancel()
         {
+            if (_testRun != null)
+            {
+                _testRun.Cancel();
+            }
         }
 
         public void RunTests(IEnumerable<TestCase> tests, IRunContext runContext, IFrameworkHandle frameworkHandle)
         {
+            var testsList = tests.ToList();
+            var testCollection = TestCollection.FromSources(testsList.Select(x => x.Source).Distinct());
+
+            testCollection.Filter(x => testsList.Any(y => x.IsForTestCase(y)));
+
+            ExecuteTestRun(testCollection, frameworkHandle);
         }
 
         public void RunTests(IEnumerable<string> sources, IRunContext runContext, IFrameworkHandle frameworkHandle)
         {
-            var _testCollection = TestCollection.FromSources(sources);
-            var results = _testCollection.CreateTestRun().ExecuteAsync().Result;
+            var testCollection = TestCollection.FromSources(sources);
+            ExecuteTestRun(testCollection, frameworkHandle);
+        }
 
-            foreach (var result in results)
+        private void ExecuteTestRun(TestCollection testCollection, IFrameworkHandle frameworkHandle)
+        {
+            _testRun = testCollection.CreateTestRun();
+
+            _testRun.TestCompleted += result =>
             {
                 frameworkHandle.RecordResult(
-                    new TestResult(
-                        new TestCase(result.Test.FullName, TestAdapterConstants.ExecutorUri, result.Test.AssemblyFilename)
-                        {
-                            CodeFilePath = result.Test.SourceFilename,
-                            LineNumber = result.Test.LineNumber,
-                            DisplayName = result.Test.Description
-                        })
+                    new VisualStudioTestResult(result.Test.ToTestCase())
                     {
-                        Outcome = result.Result,
+                        Outcome = OutcomeFromResult(result.Result),
                         Duration = result.Duration
                     });
+            };
+
+            _testRun.ExecuteAsync().GetAwaiter().GetResult();
+        }
+
+        private static TestOutcome OutcomeFromResult(Testing.TestResult result)
+        {
+            switch (result)
+            {
+                case Testing.TestResult.Passed:
+                    return TestOutcome.Passed;
+                case Testing.TestResult.Failed:
+                    return TestOutcome.Failed;
+                case Testing.TestResult.Skipped:
+                    return TestOutcome.Skipped;
+                default:
+                    return TestOutcome.None;
             }
         }
     }

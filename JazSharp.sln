@@ -11,6 +11,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JazSharp.ManualTest", "JazS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JazSharp.TestAdapter", "JazSharp.TestAdapter\JazSharp.TestAdapter.csproj", "{A0E5C36B-1465-473F-BA8B-43690F95356C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework", "Framework", "{CAD9A13A-D499-4E20-9B67-CB340DCDB995}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AutomatedTests", "AutomatedTests", "{BAECF32D-41BE-4F98-B795-E4B80370CFD5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +40,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{80D420F3-37A1-407B-84DB-249107747127} = {CAD9A13A-D499-4E20-9B67-CB340DCDB995}
+		{442B5DF7-847B-4170-8679-15380675FEB2} = {BAECF32D-41BE-4F98-B795-E4B80370CFD5}
+		{A0E5C36B-1465-473F-BA8B-43690F95356C} = {CAD9A13A-D499-4E20-9B67-CB340DCDB995}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4B038C08-BAC0-4B1F-8320-8D4BA4DAEED8}
