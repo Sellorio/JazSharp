@@ -20,6 +20,7 @@ namespace JazSharp.Reflection
         private static readonly string[] DoNotRecurseAssemblies =
         {
             "System.Private.CoreLib",
+            "System.Console",
             typeof(Jaz).Assembly.GetName().Name
         };
 
@@ -51,7 +52,9 @@ namespace JazSharp.Reflection
 
             var ilProcessor = method.Body.GetILProcessor();
             var replacedMethods = new List<MethodReference>();
+            var functionsAsParameters = new List<MethodReference>();
 
+            // needs to be for to stop exception when replacing instructions
             for (var i = 0; i < method.Body.Instructions.Count; i++)
             {
                 var instruction = method.Body.Instructions[i];
@@ -65,6 +68,10 @@ namespace JazSharp.Reflection
                     {
                         ilProcessor.Replace(instruction, replacement);
                     }
+                }
+                else if (instruction.OpCode == OpCodes.Ldftn)
+                {
+                    functionsAsParameters.Add((MethodReference)instruction.Operand);
                 }
             }
 
@@ -105,12 +112,16 @@ namespace JazSharp.Reflection
 
             processedMethods.Add(method);
 
-            foreach (var replacedMethod in replacedMethods.Select(x => x as MethodDefinition ?? x.Resolve()).Where(x => x != null).Except(processedMethods))
+            var methodsToRewrite =
+                Enumerable.Concat(replacedMethods, functionsAsParameters)
+                    .Select(x => x as MethodDefinition ?? x.Resolve())
+                    .Where(x => x != null && !DoNotRecurseAssemblies.Contains(x.DeclaringType.Module.Assembly.Name.Name))
+                    .Except(processedMethods)
+                    .ToList();
+
+            foreach (var methodToRewrite in methodsToRewrite)
             {
-                if (!DoNotRecurseAssemblies.Contains(replacedMethod.DeclaringType.Module.Assembly.Name.Name))
-                {
-                    RewriteAssembly(replacedMethod, processedMethods);
-                }
+                RewriteAssembly(methodToRewrite, processedMethods);
             }
         }
 

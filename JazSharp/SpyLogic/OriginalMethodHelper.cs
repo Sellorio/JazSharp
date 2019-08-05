@@ -132,7 +132,8 @@ namespace JazSharp.SpyLogic
             var result =
                 AssemblyContext.Current.LoadedAssemblies.Values.FirstOrDefault(x => x.GetName().Name == name)
                     ?? AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == name)
-                    ?? AssemblyContext.Current.LoadByName(name);
+                    ?? AssemblyContext.Current.LoadByName(name)
+                    ?? Assembly.Load(name); // should only be needed to load system assemblies
 
             if (result == null)
             {
