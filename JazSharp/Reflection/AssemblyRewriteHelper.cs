@@ -129,7 +129,7 @@ namespace JazSharp.Reflection
         {
             if (calledMethod != null)
             {
-                if (!DoNotWrapAssemblies.Contains(calledMethod.DeclaringType.Module.Assembly.Name.Name))
+                if (!DoNotWrapAssemblies.Contains(calledMethod.DeclaringType.Resolve().Module.Assembly.Name.Name))
                 {
                     var isFunc = calledMethod.ReturnType.FullName != "System.Void";
                     var parameterCount = !calledMethod.HasThis ? calledMethod.Parameters.Count : calledMethod.Parameters.Count + 1;

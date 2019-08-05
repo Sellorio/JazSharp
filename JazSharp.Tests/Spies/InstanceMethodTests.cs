@@ -11,6 +11,7 @@ namespace JazSharp.Tests.Spies
                 It("should discover this test.", () =>
                 {
                     var test = new Test();
+                    Jaz.SpyOn(test, nameof(test.GetV)).And.ReturnValue("A");
                     test.GetAndRunV(v =>
                     {
                         Console.WriteLine(v);

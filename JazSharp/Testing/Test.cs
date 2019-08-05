@@ -10,7 +10,7 @@ namespace JazSharp.Testing
     /// <summary>
     /// Describes a test that has been discovered.
     /// </summary>
-    public class Test
+    public class Test : IEquatable<Test>
     {
         internal int TestMetadataToken { get; }
         internal string AssemblyName { get; }
@@ -103,6 +103,26 @@ namespace JazSharp.Testing
             var execution = (Delegate)getPreparedTestExecutionMethod.Invoke(null, new object[] { module.ResolveType(TestClass.MetadataToken), TestMetadataToken });
 
             return new RunnableTest(TestClass, Path, Description, execution, IsFocused, IsExcluded, SourceFilename, LineNumber);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as Test);
+        }
+
+        public override int GetHashCode()
+        {
+            return FullName.GetHashCode();
+        }
+
+        public bool Equals(Test other)
+        {
+            return
+                other != null &&
+                FullName == other.FullName &&
+                TestClass == other.TestClass &&
+                SourceFilename == other.SourceFilename &&
+                LineNumber == other.LineNumber;
         }
     }
 }

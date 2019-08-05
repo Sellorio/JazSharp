@@ -28,25 +28,31 @@ namespace JazSharp.TestAdapter
             var testsList = tests.ToList();
             var testCollection = TestCollection.FromSources(testsList.Select(x => x.Source).Distinct());
 
-            testCollection.Filter(x => testsList.Any(y => x.IsForTestCase(y)));
+            var testMapping =
+                new Dictionary<Test, TestCase>(
+                    testCollection.Tests
+                        .Select(x => new KeyValuePair<Test, TestCase>(x, testsList.FirstOrDefault(y => x.IsForTestCase(y))))
+                        .Where(x => x.Value != null));
 
-            ExecuteTestRun(testCollection, frameworkHandle);
+            testCollection.Filter(testMapping.ContainsKey);
+
+            ExecuteTestRun(testCollection, frameworkHandle, testMapping);
         }
 
         public void RunTests(IEnumerable<string> sources, IRunContext runContext, IFrameworkHandle frameworkHandle)
         {
             var testCollection = TestCollection.FromSources(sources);
-            ExecuteTestRun(testCollection, frameworkHandle);
+            ExecuteTestRun(testCollection, frameworkHandle, testCollection.Tests.ToDictionary(x => x, x => x.ToTestCase()));
         }
 
-        private void ExecuteTestRun(TestCollection testCollection, IFrameworkHandle frameworkHandle)
+        private void ExecuteTestRun(TestCollection testCollection, IFrameworkHandle frameworkHandle, Dictionary<Test, TestCase> testMapping)
         {
             _testRun = testCollection.CreateTestRun();
 
             _testRun.TestCompleted += result =>
             {
                 frameworkHandle.RecordResult(
-                    new VisualStudioTestResult(result.Test.ToTestCase())
+                    new VisualStudioTestResult(testMapping[result.Test])
                     {
                         Outcome = OutcomeFromResult(result.Result),
                         Duration = result.Duration
