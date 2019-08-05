@@ -80,7 +80,7 @@ namespace JazSharp.Testing
                 tests =
                     sourcesAsList
                         .Where(File.Exists)
-                        .Select(assemblyContext.LoadFromAssemblyPath)
+                        .Select(assemblyContext.Load)
                         .SelectMany(x => x.GetTypes())
                         .Where(x => typeof(Spec).IsAssignableFrom(x) && !x.IsAbstract && x.GetConstructor(new Type[0]) != null)
                         .SelectMany(SpecHelper.GetTestsInSpec);

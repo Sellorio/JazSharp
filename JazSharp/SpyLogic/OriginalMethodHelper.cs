@@ -1,6 +1,8 @@
-﻿using Mono.Cecil;
+﻿using JazSharp.Testing;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,15 +12,15 @@ namespace JazSharp.SpyLogic
 {
     internal static class OriginalMethodHelper
     {
-        internal static MethodInfo GetOrignalMethod(int expectedParameterCount, bool expectingFunc)
+        internal static MethodInfo GetOrignalMethod(object[] parameters, bool expectingFunc)
         {
             var stackTrace = new StackTrace();
             var callingMethodFrame = stackTrace.GetFrame(3);
 
-            return GetOriginalMethod(callingMethodFrame.GetMethod(), callingMethodFrame.GetILOffset(), expectedParameterCount, expectingFunc);
+            return GetOriginalMethod(callingMethodFrame.GetMethod(), callingMethodFrame.GetILOffset(), parameters, expectingFunc);
         }
 
-        private static MethodInfo GetOriginalMethod(MethodBase callingMethod, int callIlOffset, int expectedParameterCount, bool expectingFunc)
+        private static MethodInfo GetOriginalMethod(MethodBase callingMethod, int callIlOffset, object[] parameters, bool expectingFunc)
         {
             var instructions = GetMethodInstructions(callingMethod);
 
@@ -26,7 +28,7 @@ namespace JazSharp.SpyLogic
             var currentInstruction = instructions.Last(x => x.Offset < callIlOffset);
 
             while (locatedMethod == null
-                || locatedMethod.Parameters.Count != expectedParameterCount
+                || locatedMethod.Parameters.Count != parameters.Length
                 || locatedMethod.ReturnType.Name == "Void" == expectingFunc)
             {
                 while (currentInstruction.OpCode != OpCodes.Callvirt && currentInstruction.OpCode != OpCodes.Call)
@@ -43,9 +45,9 @@ namespace JazSharp.SpyLogic
             }
 
             var spyIndex = GetSpyIndex(instructions, currentInstruction);
-            var originalToken = GetOriginalMetadataToken(instructions, spyIndex);
+            var serializedCallInfo = GetOriginalMetadataToken(instructions, spyIndex);
 
-            return (MethodInfo)callingMethod.Module.ResolveMethod(originalToken);
+            return GetMethod(serializedCallInfo);
         }
 
         private static Collection<Instruction> GetMethodInstructions(MethodBase method)
@@ -70,22 +72,74 @@ namespace JazSharp.SpyLogic
                     .Count(x => (x.OpCode == OpCodes.Callvirt || x.OpCode == OpCodes.Call) && ((MethodReference)x.Operand).DeclaringType.Name == nameof(SpyEntryPoints));
         }
 
-        private static int GetOriginalMetadataToken(Collection<Instruction> methodBody, int spyIndex)
+        private static string GetOriginalMetadataToken(Collection<Instruction> methodBody, int spyIndex)
         {
-            var originalsTokens = new List<int>();
+            var originalsTokens = new List<string>();
             var currentInstruction = methodBody.Last().Previous;
 
             while (currentInstruction.OpCode != OpCodes.Ret)
             {
-                if (currentInstruction.OpCode == OpCodes.Ldc_I4)
+                if (currentInstruction.OpCode == OpCodes.Ldstr)
                 {
-                    originalsTokens.Insert(0, (int)currentInstruction.Operand);
+                    originalsTokens.Insert(0, (string)currentInstruction.Operand);
                 }
 
                 currentInstruction = currentInstruction.Previous;
             }
 
             return originalsTokens[spyIndex];
+        }
+
+        private static MethodInfo GetMethod(string serializedInfo)
+        {
+            var path = serializedInfo.Split(':');
+            var assembly = GetAssembly(path[0]);
+
+            var typeInfo = path[1];
+            var indexOfGeneric = typeInfo.IndexOf('?');
+            var typeToken = indexOfGeneric == -1 ? int.Parse(typeInfo) : int.Parse(typeInfo.Substring(0, indexOfGeneric));
+            var genericTypeArgs = indexOfGeneric == -1 ? null : typeInfo.Substring(indexOfGeneric + 1).Split(' ').Select(GetType).ToArray();
+            var type = assembly.Modules.First().GetTypes().First(x => x.MetadataToken == typeToken);
+
+            if (type.IsGenericTypeDefinition)
+            {
+                type = type.MakeGenericType(genericTypeArgs);
+            }
+
+            var methodInfo = path[2];
+            indexOfGeneric = methodInfo.IndexOf('?');
+            var methodToken = indexOfGeneric == -1 ? int.Parse(methodInfo) : int.Parse(methodInfo.Substring(0, indexOfGeneric));
+            var genericMethodArgs = indexOfGeneric == -1 ? null : methodInfo.Substring(indexOfGeneric + 1).Split(' ').Select(GetType).ToArray();
+            var method = type.GetMethods().First(x => x.MetadataToken == methodToken);
+
+            if (method.IsGenericMethodDefinition)
+            {
+                method = method.MakeGenericMethod(genericMethodArgs);
+            }
+
+            return method;
+        }
+
+        private static Type GetType(string serializedInfo)
+        {
+            var parts = serializedInfo.Split('/');
+            var assembly = GetAssembly(parts[0]);
+            return assembly.Modules.First().ResolveType(int.Parse(parts[1]));
+        }
+
+        private static Assembly GetAssembly(string name)
+        {
+            var result =
+                AssemblyContext.Current.LoadedAssemblies.Values.FirstOrDefault(x => x.GetName().Name == name)
+                    ?? AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == name)
+                    ?? AssemblyContext.Current.LoadByName(name);
+
+            if (result == null)
+            {
+                throw new JazSpyException("Unable to resolve original method call from spy.");
+            }
+
+            return result;
         }
     }
 }

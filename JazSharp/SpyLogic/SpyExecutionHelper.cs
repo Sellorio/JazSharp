@@ -5,15 +5,9 @@ namespace JazSharp.SpyLogic
 {
     internal static class SpyExecutionHelper
     {
-        private static readonly string[] _assemblyBlacklist =
-        {
-            "System.Private.CoreLib",
-            "System.Threading.Thread"
-        };
-
         internal static object HandleCall(object[] parameters, bool isFunc)
         {
-            var method = OriginalMethodHelper.GetOrignalMethod(parameters.Length, isFunc);
+            var method = OriginalMethodHelper.GetOrignalMethod(parameters, isFunc);
 
             if (method == null)
             {

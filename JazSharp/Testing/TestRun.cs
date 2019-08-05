@@ -49,9 +49,14 @@ namespace JazSharp.Testing
             _temporaryDirectories = temporaryDirectories;
             Tests = ImmutableArray.CreateRange<Test>(tests);
 
-            var jaz = _assemblyContext.JazSharp.GetType(typeof(Jaz).Namespace + "." + typeof(Jaz).Name);
+            var jazAssembly = _assemblyContext.LoadedAssemblies[typeof(Jaz).Assembly.GetName().Name];
+            var jaz = jazAssembly.GetType(typeof(Jaz).Namespace + "." + typeof(Jaz).Name);
             _setupTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.SetupTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
             _clearTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.ClearTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
+            jazAssembly
+                .GetType(typeof(AssemblyContext).Namespace + "." + typeof(AssemblyContext).Name)
+                .GetMethod(nameof(AssemblyContext.SetupCurrent), BindingFlags.Static | BindingFlags.NonPublic)
+                .Invoke(null, new object[] { _assemblyContext.DllSearchPaths, _assemblyContext.LoadedAssemblies });
         }
 
         /// <summary>
@@ -84,7 +89,7 @@ namespace JazSharp.Testing
         /// </summary>
         public void Dispose()
         {
-            //TODO: Unload assembly load context here
+            _assemblyContext.Dispose();
 
             foreach (var directory in _temporaryDirectories)
             {
@@ -214,12 +219,15 @@ namespace JazSharp.Testing
             }
 
             var assemblyContext = new AssemblyContext(temporaryDirectories.ToArray());
-            var executionReadyAssemblies = sources.Select(assemblyContext.LoadFromAssemblyPath).ToList();
+            var executionReadyAssemblies = sources.Select(assemblyContext.Load).ToList();
 
             return
                 new TestRun(
                     assemblyContext,
-                    testCollection.Tests.Select(x => x.Prepare(executionReadyAssemblies.First(y => y.FullName == x.AssemblyName), assemblyContext.JazSharp)),
+                    testCollection.Tests.Select(x =>
+                        x.Prepare(
+                            executionReadyAssemblies.First(y => y.FullName == x.AssemblyName),
+                            assemblyContext.LoadedAssemblies[typeof(Jaz).Assembly.GetName().Name])),
                     temporaryDirectories);
         }
 

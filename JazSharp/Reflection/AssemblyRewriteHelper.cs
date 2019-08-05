@@ -2,9 +2,11 @@
 using JazSharp.Testing;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace JazSharp.Reflection
 {
@@ -68,7 +70,30 @@ namespace JazSharp.Reflection
 
             foreach (var replacedMethod in replacedMethods)
             {
-                ilProcessor.Append(Instruction.Create(OpCodes.Ldc_I4, replacedMethod.MetadataToken.ToInt32()));
+                // Needed to get correct module/assembly for declaring type as well as the correct metadata token.
+                var resolvedReplacedMethod = replacedMethod.Resolve();
+                var serializedInfo = new StringBuilder();
+
+                serializedInfo
+                    .Append(resolvedReplacedMethod.DeclaringType.Module.Assembly.Name.Name)
+                    .Append(':')
+                    .Append(resolvedReplacedMethod.DeclaringType.MetadataToken.ToInt32());
+
+                if (replacedMethod.DeclaringType is GenericInstanceType genericType)
+                {
+                    SerializeGenericArguments(serializedInfo, genericType.GenericArguments);
+                }
+
+                serializedInfo
+                    .Append(':')
+                    .Append(resolvedReplacedMethod.MetadataToken.ToInt32());
+
+                if (replacedMethod is GenericInstanceMethod genericMethod)
+                {
+                    SerializeGenericArguments(serializedInfo, genericMethod.GenericArguments);
+                }
+
+                ilProcessor.Append(Instruction.Create(OpCodes.Ldstr, serializedInfo.ToString()));
             }
 
             if (dummyVariable != null)
@@ -80,7 +105,7 @@ namespace JazSharp.Reflection
 
             processedMethods.Add(method);
 
-            foreach (var replacedMethod in replacedMethods.OfType<MethodDefinition>().Except(processedMethods))
+            foreach (var replacedMethod in replacedMethods.Select(x => x as MethodDefinition ?? x.Resolve()).Where(x => x != null).Except(processedMethods))
             {
                 if (!DoNotRecurseAssemblies.Contains(replacedMethod.DeclaringType.Module.Assembly.Name.Name))
                 {
@@ -113,29 +138,62 @@ namespace JazSharp.Reflection
 
                     foreach (var parameter in calledMethod.Parameters)
                     {
-                        if (parameter.ParameterType.IsGenericParameter)
+                        var parameterType = parameter.ParameterType;
+
+                        if (parameterType.IsGenericParameter)
                         {
-                            // This will fail on generic structs.
-                            // It may be possible parse all the IL and identify the exact type of the parameter.
-                            genericMethod.GenericArguments.Add(module.ImportReference(typeof(object)));
+                            parameterType = ResolveGenericParameter(parameterType, calledMethod.DeclaringType);
                         }
-                        else
-                        {
-                            genericMethod.GenericArguments.Add(parameter.ParameterType);
-                        }
+
+                        genericMethod.GenericArguments.Add(parameterType);
                     }
 
-                    if (!replacedMethods.Contains(calledMethod))
-                    {
-                        calledMethod = calledMethod.Resolve();
-                        replacedMethods.Add(calledMethod);
-                    }
+                    replacedMethods.Add(calledMethod);
 
                     return Instruction.Create(OpCodes.Call, genericMethod);
                 }
             }
 
             return null;
+        }
+
+        private static TypeReference ResolveGenericParameter(TypeReference parameterType, TypeReference declaringType)
+        {
+            //TODO: Confirm this logic will work for a type nested in a generic type (with that type's method using the parent classes generic args).
+            if (declaringType is GenericInstanceType genericInstanceType)
+            {
+                var parameterIndex = int.Parse(parameterType.Name.Substring(1));
+                return genericInstanceType.GenericArguments[parameterIndex];
+            }
+
+            if (declaringType.IsNested)
+            {
+                return ResolveGenericParameter(parameterType, declaringType.DeclaringType);
+            }
+
+            throw new System.InvalidOperationException("Unable to resolve generic type parameter when rewriting the assembly.");
+        }
+
+        private static void SerializeGenericArguments(StringBuilder serializedInfo, Collection<TypeReference> genericArguments)
+        {
+            serializedInfo.Append('?');
+            var first = true;
+
+            foreach (var arg in genericArguments)
+            {
+                if (!first)
+                {
+                    serializedInfo.Append(' ');
+                }
+
+                var resolvedArg = arg.Resolve();
+                serializedInfo
+                    .Append(resolvedArg.Module.Assembly.Name.Name)
+                    .Append('/')
+                    .Append(resolvedArg.MetadataToken.ToInt32());
+
+                first = false;
+            }
         }
     }
 }
