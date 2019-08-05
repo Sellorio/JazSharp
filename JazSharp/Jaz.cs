@@ -7,7 +7,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using JazSharp.Testing.ExecutionContext;
+using System.Threading;
+using System.Text;
 
+[assembly: InternalsVisibleTo("JazSharp.TestAdapter")]
 [assembly: InternalsVisibleTo("JazSharp.Tests")]
 [assembly: InternalsVisibleTo("JazSharp.ManualTest")]
 
@@ -15,6 +19,26 @@ namespace JazSharp
 {
     public static class Jaz
     {
+        internal static SemaphoreSlim CurrentTestSemaphore { get; } = new SemaphoreSlim(1, 1);
+
+        /// <summary>
+        /// The context for the currently executing test. This can be used to add custom messages
+        /// to the test's output.
+        /// </summary>
+        public static TestExecutionContext CurrentTest { get; internal set; }
+
+        internal static void SetupTestExecutionContext(string testDescription, StringBuilder output)
+        {
+            SpyInfo.Clear();
+            CurrentTest = new TestExecutionContext(testDescription, output);
+        }
+
+        internal static void ClearTestExecutionContext()
+        {
+            CurrentTest = null;
+            SpyInfo.Clear();
+        }
+
         public static Spy SpyOn(object @object, string nameOfMethod)
             => SpyOn(@object, nameOfMethod, null);
 
@@ -92,10 +116,9 @@ namespace JazSharp
                 throw new ArgumentException("Name matches more than one static methods.", nameof(nameOfMethod));
             }
 
-            var key = TestScopeHelper.GetTestName();
-            var spyInfo = SpyCreator.CreateSpy(methods[0], key);
+            var spyInfo = SpyCreator.CreateSpy(methods[0], string.Empty);
 
-            return new Spy(spyInfo, key);
+            return new Spy(spyInfo, string.Empty);
         }
 
         public static PropertySpy SpyOn<TObject, TProperty>(TObject @object, Expression<Func<TObject, TProperty>> property)
@@ -107,22 +130,17 @@ namespace JazSharp
         public static PropertySpy SpyOn<TProperty>(Expression<Func<TProperty>> staticProperty)
         {
             var propertyInfo = ExpressionHelper.GetPropertyFromExpression(staticProperty);
-            return new PropertySpy(propertyInfo, TestScopeHelper.GetTestName());
+            return new PropertySpy(propertyInfo, string.Empty);
         }
 
-        public static SpyExpect Expect(Spy spy)
+        public static AnyMatcher Any<T>()
         {
-            return new SpyExpect(spy);
+            return new AnyMatcher(typeof(T), false);
         }
 
-        public static ValueExpect Expect(object value)
+        public static AnyMatcher InstanceOf<T>()
         {
-            return new ValueExpect(value);
-        }
-
-        public static AnyMatcher Any<T>(bool exact = true)
-        {
-            return new AnyMatcher(typeof(T), exact);
+            return new AnyMatcher(typeof(T), true);
         }
 
         public static object Invoke(Expression<Action> method)

@@ -2,12 +2,12 @@
 
 namespace JazSharp.Reflection
 {
-    internal class Instruction
+    internal class Instruction2
     {
         public OpCode Operation { get; }
         public object Operand { get; }
 
-        internal Instruction(OpCode operation, object operand)
+        internal Instruction2(OpCode operation, object operand)
         {
             Operation = operation;
             Operand = operand;
