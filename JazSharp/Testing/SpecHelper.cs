@@ -59,7 +59,7 @@ namespace JazSharp.Testing
             return result;
         }
 
-        internal static Delegate GetPreparedTestExecution(Type spec, int testMetadataToken)
+        internal static Delegate GetPreparedTestExecution(Type spec, string testFullName)
         {
             _executions = new List<Delegate>();
             var tests = GetTestsInSpec(spec);
@@ -67,7 +67,7 @@ namespace JazSharp.Testing
 
             for (var i = 0; i < tests.Length; i++)
             {
-                if (tests[i].TestMetadataToken == testMetadataToken)
+                if (tests[i].FullName == testFullName)
                 {
                     result = _executions[i];
                     break;

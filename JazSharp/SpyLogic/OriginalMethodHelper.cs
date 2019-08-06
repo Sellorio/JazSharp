@@ -25,7 +25,7 @@ namespace JazSharp.SpyLogic
             var instructions = GetMethodInstructions(callingMethod);
 
             var locatedMethod = default(GenericInstanceMethod);
-            var currentInstruction = instructions.Last(x => x.Offset < callIlOffset);
+            var currentInstruction = instructions.LastOrDefault(x => x.Offset < callIlOffset) ?? instructions.First();
 
             while (locatedMethod == null
                 || locatedMethod.Parameters.Count != parameters.Length
@@ -97,9 +97,9 @@ namespace JazSharp.SpyLogic
 
             var typeInfo = path[1];
             var indexOfGeneric = typeInfo.IndexOf('?');
-            var typeToken = indexOfGeneric == -1 ? int.Parse(typeInfo) : int.Parse(typeInfo.Substring(0, indexOfGeneric));
+            var typeName = indexOfGeneric == -1 ? typeInfo : typeInfo.Substring(0, indexOfGeneric);
             var genericTypeArgs = indexOfGeneric == -1 ? null : typeInfo.Substring(indexOfGeneric + 1).Split(' ').Select(GetType).ToArray();
-            var type = assembly.Modules.First().GetTypes().First(x => x.MetadataToken == typeToken);
+            var type = assembly.GetType(typeName);
 
             if (type.IsGenericTypeDefinition)
             {
@@ -108,9 +108,12 @@ namespace JazSharp.SpyLogic
 
             var methodInfo = path[2];
             indexOfGeneric = methodInfo.IndexOf('?');
-            var methodToken = indexOfGeneric == -1 ? int.Parse(methodInfo) : int.Parse(methodInfo.Substring(0, indexOfGeneric));
+            var methodDescription = indexOfGeneric == -1 ? methodInfo : methodInfo.Substring(0, indexOfGeneric);
             var genericMethodArgs = indexOfGeneric == -1 ? null : methodInfo.Substring(indexOfGeneric + 1).Split(' ').Select(GetType).ToArray();
-            var method = type.GetMethods().First(x => x.MetadataToken == methodToken);
+            var method =
+                type
+                    .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                    .First(x => x.ToString() == methodDescription);
 
             if (method.IsGenericMethodDefinition)
             {
@@ -124,7 +127,7 @@ namespace JazSharp.SpyLogic
         {
             var parts = serializedInfo.Split('/');
             var assembly = GetAssembly(parts[0]);
-            return assembly.Modules.First().ResolveType(int.Parse(parts[1]));
+            return assembly.GetType(parts[1]);
         }
 
         private static Assembly GetAssembly(string name)

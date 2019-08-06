@@ -50,11 +50,7 @@ namespace JazSharp.Tests
             }
         }
 
-        private class TestException : TestBaseException
-        {
-        }
-
-        private class TestBaseException : Exception
+        private class TestException : Exception
         {
         }
     }

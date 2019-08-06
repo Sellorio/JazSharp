@@ -167,7 +167,7 @@ namespace JazSharp.Testing
             _clearTestExecutionContextMethod.Invoke(null, new object[0]);
             Jaz.CurrentTestSemaphore.Release();
 
-            var result = new TestResultInfo(test, testResult, output.ToString(), stopwatch.Elapsed);
+            var result = new TestResultInfo(test, testResult, output.ToString().Trim(), stopwatch.Elapsed);
 
             try
             {

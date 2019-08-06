@@ -24,6 +24,19 @@ namespace JazSharp.Reflection
             typeof(Jaz).Assembly.GetName().Name
         };
 
+        private static readonly string[] BuiltInValueTypes =
+        {
+            typeof(void).ToString(),
+            typeof(bool).ToString(),
+            typeof(byte).ToString(),
+            typeof(short).ToString(),
+            typeof(int).ToString(),
+            typeof(long).ToString(),
+            typeof(float).ToString(),
+            typeof(double).ToString(),
+            typeof(decimal).ToString()
+        };
+
         internal static void RewriteAssembly(string filename, TestCollection forTests)
         {
             var anyFocused = forTests.Tests.Any(x => x.IsFocused);
@@ -84,7 +97,7 @@ namespace JazSharp.Reflection
                 serializedInfo
                     .Append(resolvedReplacedMethod.DeclaringType.Module.Assembly.Name.Name)
                     .Append(':')
-                    .Append(resolvedReplacedMethod.DeclaringType.MetadataToken.ToInt32());
+                    .Append(TypeName(resolvedReplacedMethod.DeclaringType));
 
                 if (replacedMethod.DeclaringType is GenericInstanceType genericType)
                 {
@@ -93,7 +106,7 @@ namespace JazSharp.Reflection
 
                 serializedInfo
                     .Append(':')
-                    .Append(resolvedReplacedMethod.MetadataToken.ToInt32());
+                    .Append(MethodName(resolvedReplacedMethod));
 
                 if (replacedMethod is GenericInstanceMethod genericMethod)
                 {
@@ -201,10 +214,20 @@ namespace JazSharp.Reflection
                 serializedInfo
                     .Append(resolvedArg.Module.Assembly.Name.Name)
                     .Append('/')
-                    .Append(resolvedArg.MetadataToken.ToInt32());
+                    .Append(TypeName(resolvedArg));
 
                 first = false;
             }
+        }
+
+        private static string TypeName(TypeDefinition type)
+        {
+            return BuiltInValueTypes.Contains(type.ToString()) ? type.Name : type.ToString().Replace('/', '+');
+        }
+
+        private static string MethodName(MethodDefinition method)
+        {
+            return $"{TypeName(method.ReturnType.Resolve())} {method.Name}({string.Join(", ", method.Parameters.Select(x => TypeName(x.ParameterType.Resolve())))})";
         }
     }
 }

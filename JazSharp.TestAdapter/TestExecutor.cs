@@ -51,12 +51,15 @@ namespace JazSharp.TestAdapter
 
             _testRun.TestCompleted += result =>
             {
-                frameworkHandle.RecordResult(
-                    new VisualStudioTestResult(testMapping[result.Test])
-                    {
-                        Outcome = OutcomeFromResult(result.Result),
-                        Duration = result.Duration
-                    });
+                var vsResult = new VisualStudioTestResult(testMapping[result.Test])
+                {
+                    Outcome = OutcomeFromResult(result.Result),
+                    Duration = result.Duration
+                };
+
+                vsResult.ErrorMessage = result.Output;
+
+                frameworkHandle.RecordResult(vsResult);
             };
 
             _testRun.ExecuteAsync().GetAwaiter().GetResult();

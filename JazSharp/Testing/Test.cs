@@ -100,7 +100,8 @@ namespace JazSharp.Testing
                     .GetType(typeof(SpecHelper).Namespace + "." + typeof(SpecHelper).Name)
                     .GetMethod(nameof(SpecHelper.GetPreparedTestExecution), BindingFlags.Static | BindingFlags.NonPublic);
 
-            var execution = (Delegate)getPreparedTestExecutionMethod.Invoke(null, new object[] { module.ResolveType(TestClass.MetadataToken), TestMetadataToken });
+            var testClass = executionReadyAssembly.GetTypes().First(x => x.ToString() == TestClass.ToString());
+            var execution = (Delegate)getPreparedTestExecutionMethod.Invoke(null, new object[] { testClass, FullName });
 
             return new RunnableTest(TestClass, Path, Description, execution, IsFocused, IsExcluded, SourceFilename, LineNumber);
         }

@@ -16,9 +16,9 @@ namespace JazSharp
             definition();
         }
 
-        public static void Describe(string childDescription, Action definition)
+        public static void Describe(string description, Action definition)
         {
-            SpecHelper.PushDescribe(childDescription, false, false);
+            SpecHelper.PushDescribe(description, false, false);
             definition();
         }
 
