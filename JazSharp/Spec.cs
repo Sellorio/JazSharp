@@ -81,9 +81,25 @@ namespace JazSharp
             return new SpyExpect(spy);
         }
 
-        public static ValueExpect Expect(object value)
+        public static CallExpect Expect(Action call)
         {
-            return new ValueExpect(value);
+            Exception exception = null;
+
+            try
+            {
+                call();
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+            }
+
+            return new CallExpect(exception);
+        }
+
+        public static ValueExpect<TValue> Expect<TValue>(TValue value)
+        {
+            return new ValueExpect<TValue>(value);
         }
     }
 }

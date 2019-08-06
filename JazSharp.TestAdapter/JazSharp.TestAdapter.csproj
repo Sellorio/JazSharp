@@ -6,13 +6,12 @@
     <FileVersion>1.0.0.0</FileVersion>
     <Version>0.1.5</Version>
     <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="16.2.0" />
-    <PackageReference Include="System.ComponentModel.Composition" Version="4.5.0" />
-    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="16.2.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" PrivateAssets="all" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="4.5.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="16.2.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

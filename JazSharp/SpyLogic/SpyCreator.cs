@@ -22,11 +22,15 @@ namespace JazSharp.SpyLogic
 
             spy.CallsLog[key] = new List<object[]>();
             spy.CallThroughMapping[key] = false;
-            spy.CallbackMapping[key] = null;
 
             if (spy.ReturnValueMapping.ContainsKey(key))
             {
                 spy.ReturnValueMapping.Remove(key);
+            }
+
+            if (spy.ThrowMapping.ContainsKey(key))
+            {
+                spy.ThrowMapping.Remove(key);
             }
 
             if (spy.ReturnValuesMapping.ContainsKey(key))

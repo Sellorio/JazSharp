@@ -21,6 +21,41 @@ namespace JazSharp.Spies
         public Spy CallThrough()
         {
             _spyInfo.CallThroughMapping[_key] = true;
+
+            if (_spyInfo.ReturnValuesMapping.ContainsKey(_key))
+            {
+                _spyInfo.ReturnValuesMapping.Remove(_key);
+            }
+
+            if (_spyInfo.ReturnValueMapping.ContainsKey(_key))
+            {
+                _spyInfo.ReturnValueMapping.Remove(_key);
+            }
+
+            if (_spyInfo.ThrowMapping.ContainsKey(_key))
+            {
+                _spyInfo.ThrowMapping.Remove(_key);
+            }
+
+            return _spy;
+        }
+
+        public Spy Throw(Exception exception)
+        {
+            _spyInfo.CallThroughMapping[_key] = false;
+
+            if (_spyInfo.ReturnValuesMapping.ContainsKey(_key))
+            {
+                _spyInfo.ReturnValuesMapping.Remove(_key);
+            }
+
+            if (_spyInfo.ReturnValueMapping.ContainsKey(_key))
+            {
+                _spyInfo.ReturnValueMapping.Remove(_key);
+            }
+
+            _spyInfo.ThrowMapping[_key] = exception;
+
             return _spy;
         }
 
@@ -36,6 +71,11 @@ namespace JazSharp.Spies
             if (_spyInfo.ReturnValuesMapping.ContainsKey(_key))
             {
                 _spyInfo.ReturnValuesMapping.Remove(_key);
+            }
+
+            if (_spyInfo.ThrowMapping.ContainsKey(_key))
+            {
+                _spyInfo.ThrowMapping.Remove(_key);
             }
 
             _spyInfo.ReturnValueMapping[_key] = value;
@@ -55,6 +95,11 @@ namespace JazSharp.Spies
             if (_spyInfo.ReturnValueMapping.ContainsKey(_key))
             {
                 _spyInfo.ReturnValueMapping.Remove(_key);
+            }
+
+            if (_spyInfo.ThrowMapping.ContainsKey(_key))
+            {
+                _spyInfo.ThrowMapping.Remove(_key);
             }
 
             _spyInfo.ReturnValuesMapping[_key] = new Queue<object>(values.Cast<object>());

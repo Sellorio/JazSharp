@@ -13,9 +13,9 @@ namespace JazSharp.SpyLogic
         internal MethodInfo Method { get; }
         internal Dictionary<object, bool> CallThroughMapping { get; } = new Dictionary<object, bool>();
         internal Dictionary<object, object> ReturnValueMapping { get; } = new Dictionary<object, object>();
+        internal Dictionary<object, Exception> ThrowMapping { get; } = new Dictionary<object, Exception>();
         internal Dictionary<object, Queue<object>> ReturnValuesMapping { get; } = new Dictionary<object, Queue<object>>();
         internal Dictionary<object, List<object[]>> CallsLog { get; } = new Dictionary<object, List<object[]>>();
-        internal Dictionary<object, Action<object[]>> CallbackMapping { get; } = new Dictionary<object, Action<object[]>>();
 
         internal SpyInfo(MethodInfo method)
         {
@@ -29,14 +29,14 @@ namespace JazSharp.SpyLogic
                 CallThroughMapping.Remove(key);
             }
 
-            if (CallbackMapping.ContainsKey(key))
-            {
-                CallbackMapping.Remove(key);
-            }
-
             if (ReturnValueMapping.ContainsKey(key))
             {
                 ReturnValueMapping.Remove(key);
+            }
+
+            if (ThrowMapping.ContainsKey(key))
+            {
+                ThrowMapping.Remove(key);
             }
 
             if (ReturnValuesMapping.ContainsKey(key))

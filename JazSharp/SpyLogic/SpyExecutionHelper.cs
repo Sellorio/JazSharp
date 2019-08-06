@@ -44,12 +44,15 @@ namespace JazSharp.SpyLogic
 
             spyInfo.CallsLog[key].Add(parameters);
 
+            if (spyInfo.ThrowMapping.TryGetValue(key, out var exceptionToThrow))
+            {
+                throw exceptionToThrow;
+            }
+
             var result =
                 spyInfo.CallThroughMapping[key]
                     ? method.Invoke(instance, parameters)
                     : HandleReturnValue(spyInfo, key);
-
-            spyInfo.CallbackMapping[key]?.Invoke(parameters);
 
             return result;
         }

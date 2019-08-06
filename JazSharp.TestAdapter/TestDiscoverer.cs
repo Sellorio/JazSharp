@@ -23,6 +23,7 @@ namespace JazSharp.TestAdapter
 
             foreach (var test in _testCollection.Tests)
             {
+                logger.SendMessage(TestMessageLevel.Informational, "Test found: " + test.FullName);
                 discoverySink.SendTestCase(test.ToTestCase());
             }
         }
