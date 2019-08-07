@@ -1,6 +1,5 @@
 ﻿using JazSharp.Expectations;
 using JazSharp.Reflection;
-using JazSharp.SpyLogic;
 using JazSharp.Spies;
 using System;
 using System.Linq;
@@ -12,8 +11,6 @@ using System.Threading;
 using System.Text;
 
 [assembly: InternalsVisibleTo("JazSharp.TestAdapter")]
-[assembly: InternalsVisibleTo("JazSharp.Tests")]
-[assembly: InternalsVisibleTo("JazSharp.ManualTest")]
 
 namespace JazSharp
 {

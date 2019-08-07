@@ -43,10 +43,13 @@ namespace JazSharp.Reflection
 
             using (var assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true, ReadSymbols = true }))
             {
-                foreach (var test in forTests.Tests.Where(x => (!anyFocused || x.IsFocused) && !x.IsExcluded && x.AssemblyName == assembly.FullName))
+                foreach (var test in forTests.Tests.Where(x => (!anyFocused || x.IsFocused) && !x.IsExcluded && x.Execution.Main.Method.Module.Assembly.FullName == assembly.FullName))
                 {
-                    var testMethod = (MethodDefinition)assembly.MainModule.LookupToken(test.TestMetadataToken);
-                    RewriteAssembly(testMethod, new List<MethodDefinition>());
+                    foreach (var @delegate in test.Execution.GetDelegates())
+                    {
+                        var testMethod = (MethodDefinition)assembly.MainModule.LookupToken(@delegate.Method.MetadataToken);
+                        RewriteAssembly(testMethod, new List<MethodDefinition>());
+                    }
                 }
 
                 assembly.Write(new WriterParameters { WriteSymbols = true });

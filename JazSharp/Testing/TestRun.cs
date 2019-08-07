@@ -43,11 +43,11 @@ namespace JazSharp.Testing
         /// </summary>
         public event Action TestRunCompleted;
 
-        private TestRun(AssemblyContext assemblyContext, IEnumerable<RunnableTest> tests, IEnumerable<string> temporaryDirectories)
+        private TestRun(AssemblyContext assemblyContext, IEnumerable<Test> tests, IEnumerable<string> temporaryDirectories)
         {
             _assemblyContext = assemblyContext;
             _temporaryDirectories = temporaryDirectories;
-            Tests = ImmutableArray.CreateRange<Test>(tests);
+            Tests = ImmutableArray.CreateRange(tests);
 
             var jazAssembly = _assemblyContext.LoadedAssemblies[typeof(Jaz).Assembly.GetName().Name];
             var jaz = jazAssembly.GetType(typeof(Jaz).Namespace + "." + typeof(Jaz).Name);
@@ -104,13 +104,9 @@ namespace JazSharp.Testing
             {
                 List<TestResultInfo> results = new List<TestResultInfo>();
 
-                foreach (RunnableTest test in Tests)
+                foreach (var test in Tests)
                 {
-                    var result =
-                        test.Execution is Action action
-                            ? await TestExecutionAsync(test, action)
-                            : await TestExecutionAsync(test, (Func<Task>)test.Execution);
-
+                    var result = await TestExecutionAsync(test, test.Execution);
                     results.Add(result);
 
                     if (_cancellationTokenSource.Token.IsCancellationRequested)
@@ -125,18 +121,7 @@ namespace JazSharp.Testing
             });
         }
 
-        private Task<TestResultInfo> TestExecutionAsync(Test test, Action run)
-        {
-            return TestExecutionAsync(
-                test,
-                () =>
-                {
-                    run();
-                    return Task.CompletedTask;
-                });
-        }
-
-        private async Task<TestResultInfo> TestExecutionAsync(Test test, Func<Task> run)
+        private async Task<TestResultInfo> TestExecutionAsync(Test test, TestExecution execution)
         {
             if (_cancellationTokenSource.Token.IsCancellationRequested)
             {
@@ -153,7 +138,19 @@ namespace JazSharp.Testing
             try
             {
                 stopwatch.Start();
-                await run();
+
+                foreach (var method in execution.GetDelegates())
+                {
+                    if (method is Action action)
+                    {
+                        action.Invoke();
+                    }
+                    else
+                    {
+                        await ((Func<Task>)method).Invoke();
+                    }
+                }
+
                 stopwatch.Stop();
                 output.Append("\r\nTest completed successfully.");
                 testResult = TestResult.Passed;
@@ -226,7 +223,7 @@ namespace JazSharp.Testing
                     assemblyContext,
                     testCollection.Tests.Select(x =>
                         x.Prepare(
-                            executionReadyAssemblies.First(y => y.FullName == x.AssemblyName),
+                            executionReadyAssemblies.First(y => y.FullName == x.Execution.Main.Method.Module.Assembly.FullName),
                             assemblyContext.LoadedAssemblies[typeof(Jaz).Assembly.GetName().Name])),
                     temporaryDirectories);
         }

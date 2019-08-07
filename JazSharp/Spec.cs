@@ -82,6 +82,26 @@ namespace JazSharp
             SpecHelper.RegisterTest(testDescription, test, true, false, sourceFile, lineNumber);
         }
 
+        public static void BeforeEach(Action beforeEach)
+        {
+            SpecHelper.AddBeforeEach(beforeEach);
+        }
+
+        public static void BeforeEach(Func<Task> beforeEach)
+        {
+            SpecHelper.AddBeforeEach(beforeEach);
+        }
+
+        public static void AfterEach(Action afterEach)
+        {
+            SpecHelper.AddAfterEach(afterEach);
+        }
+
+        public static void AfterEach(Func<Task> afterEach)
+        {
+            SpecHelper.AddAfterEach(afterEach);
+        }
+
         public static SpyExpect Expect(Spy spy)
         {
             return new SpyExpect(spy);

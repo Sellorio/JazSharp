@@ -12,8 +12,7 @@ namespace JazSharp.Testing
     /// </summary>
     public class Test : IEquatable<Test>
     {
-        internal int TestMetadataToken { get; }
-        internal string AssemblyName { get; }
+        internal TestExecution Execution { get; }
 
         /// <summary>
         /// The class that defined this test.
@@ -54,11 +53,6 @@ namespace JazSharp.Testing
         public string FullName { get; }
 
         /// <summary>
-        /// The file name of the assembly in which this test resides.
-        /// </summary>
-        public string AssemblyFilename { get; }
-
-        /// <summary>
         /// The filename of the source file where the <see cref="Spec.It(string, Action, string, int)"/> call was made.
         /// </summary>
         public string SourceFilename { get; }
@@ -73,16 +67,14 @@ namespace JazSharp.Testing
             Type testClass,
             IEnumerable<string> path,
             string description,
-            Delegate execution,
+            TestExecution testExecution,
             bool isFocused,
             bool isExcluded,
             string sourceFilename,
             int lineNumber)
         {
+            Execution = testExecution;
             TestClass = testClass;
-            TestMetadataToken = execution.Method.MetadataToken;
-            AssemblyName = execution.Method.DeclaringType.Assembly.FullName;
-            AssemblyFilename = execution.Method.DeclaringType.Assembly.Location;
             Path = ImmutableArray.CreateRange(path);
             Description = description;
             FullName = string.Join(" ", path) + " " + description;
@@ -92,18 +84,27 @@ namespace JazSharp.Testing
             LineNumber = lineNumber;
         }
 
-        internal RunnableTest Prepare(Assembly executionReadyAssembly, Assembly jasSharpAssembly)
+        internal Test Prepare(Assembly executionReadyAssembly, Assembly jasSharpAssembly)
         {
             var module = executionReadyAssembly.Modules.First();
             var getPreparedTestExecutionMethod =
                 jasSharpAssembly
                     .GetType(typeof(SpecHelper).Namespace + "." + typeof(SpecHelper).Name)
-                    .GetMethod(nameof(SpecHelper.GetPreparedTestExecution), BindingFlags.Static | BindingFlags.NonPublic);
+                    .GetMethod(nameof(SpecHelper.GetTestExecutionMethods), BindingFlags.Static | BindingFlags.NonPublic);
 
             var testClass = executionReadyAssembly.GetTypes().First(x => x.ToString() == TestClass.ToString());
-            var execution = (Delegate)getPreparedTestExecutionMethod.Invoke(null, new object[] { testClass, FullName });
+            var executionMethods = (Delegate[][])getPreparedTestExecutionMethod.Invoke(null, new object[] { testClass, FullName });
 
-            return new RunnableTest(TestClass, Path, Description, execution, IsFocused, IsExcluded, SourceFilename, LineNumber);
+            return
+                new Test(
+                    TestClass,
+                    Path,
+                    Description,
+                    new TestExecution(executionMethods[0], executionMethods[2], executionMethods[1][0]),
+                    IsFocused,
+                    IsExcluded,
+                    SourceFilename,
+                    LineNumber);
         }
 
         public override bool Equals(object obj)
