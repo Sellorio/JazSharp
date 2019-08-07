@@ -21,6 +21,11 @@ namespace JazSharp.Testing
             });
         }
 
+        internal static void PopDescribe()
+        {
+            _describeStack.Pop();
+        }
+
         internal static void RegisterTest(string description, Delegate action, bool isFocused, bool isExcluded, string sourceFilename, int lineNumber)
         {
             var actualIsExcluded = isExcluded || _describeStack.Any(x => x.IsExcluded);
@@ -29,7 +34,7 @@ namespace JazSharp.Testing
             _tests.Add(
                 new Test(
                     _testClass,
-                    _describeStack.Select(x => x.Description).ToArray(),
+                    _describeStack.Select(x => x.Description).Reverse().ToArray(),
                     description,
                     action,
                     actualIsFocused,

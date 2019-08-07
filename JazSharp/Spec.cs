@@ -14,36 +14,42 @@ namespace JazSharp
         {
             SpecHelper.PushDescribe(typeof(TType).Name, false, false);
             definition();
+            SpecHelper.PopDescribe();
         }
 
         public static void Describe(string description, Action definition)
         {
             SpecHelper.PushDescribe(description, false, false);
             definition();
+            SpecHelper.PopDescribe();
         }
 
         public static void xDescribe<TType>(Action definition)
         {
             SpecHelper.PushDescribe(typeof(TType).Name, false, true);
             definition();
+            SpecHelper.PopDescribe();
         }
 
         public static void xDescribe(string childDescription, Action definition)
         {
             SpecHelper.PushDescribe(childDescription, false, true);
             definition();
+            SpecHelper.PopDescribe();
         }
 
         public static void fDescribe<TType>(Action definition)
         {
             SpecHelper.PushDescribe(typeof(TType).Name, true, false);
             definition();
+            SpecHelper.PopDescribe();
         }
 
         public static void fDescribe(string childDescription, Action definition)
         {
             SpecHelper.PushDescribe(childDescription, true, false);
             definition();
+            SpecHelper.PopDescribe();
         }
 
         public static void It(string testDescription, Action test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)

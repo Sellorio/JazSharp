@@ -55,14 +55,6 @@ namespace JazSharp.Reflection
 
         private static void RewriteAssembly(MethodDefinition method, List<MethodDefinition> processedMethods)
         {
-            VariableDefinition dummyVariable = null;
-
-            if (method.ReturnType.FullName != "System.Void")
-            {
-                dummyVariable = new VariableDefinition(method.ReturnType);
-                method.Body.Variables.Add(dummyVariable);
-            }
-
             var ilProcessor = method.Body.GetILProcessor();
             var replacedMethods = new List<MethodReference>();
             var functionsAsParameters = new List<MethodReference>();
