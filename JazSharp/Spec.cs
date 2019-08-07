@@ -101,6 +101,11 @@ namespace JazSharp
         {
             return new ValueExpect<TValue>(value);
         }
+
+        public static void Fail(string message = null)
+        {
+            throw new JazExpectationException(message ?? "The test was explicitly failed.");
+        }
     }
 }
 #pragma warning restore IDE1006 // Naming Styles

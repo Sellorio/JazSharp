@@ -1,26 +1,55 @@
 ﻿using JazSharp.SpyLogic;
+using JazSharp.SpyLogic.Behaviour;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace JazSharp.Spies
 {
-    public class Spy : ISpy
+    public class Spy
     {
-        private readonly SpyInfo _spyInfo;
-        private readonly object _key;
+        private static readonly List<Spy> _spies = new List<Spy>();
 
-        SpyInfo ISpy.SpyInfo => _spyInfo;
-        object ISpy.Key => _key;
+        internal object Key { get; }
+        internal MethodInfo Method { get; }
+        internal List<object[]> CallLog { get; } = new List<object[]>();
+        internal Queue<SpyBehaviourBase> Behaviours { get; } = new Queue<SpyBehaviourBase>();
 
-        public SpyAnd And => new SpyAnd(this, _spyInfo, _key);
+        public SpyAnd And => new SpyAnd(this);
+        public SpyThen Then => new SpyThen(this);
 
-        internal Spy(SpyInfo spyInfo, object key)
+        private Spy(MethodInfo method, object key)
         {
-            _spyInfo = spyInfo;
-            _key = key;
+            Method = method.GetBaseDefinition();
+            Key = key;
+            var defaultBehaviour = new DefaultBehaviour();
+            defaultBehaviour.UpdateLifetime(int.MaxValue);
+            Behaviours.Enqueue(defaultBehaviour);
+        }
+
+        internal static Spy Create(MethodInfo method, object key)
+        {
+            Get(method, key)?.Dispose();
+
+            var spy = new Spy(method, key);
+            _spies.Add(spy);
+            return spy;
+        }
+
+        internal static Spy Get(MethodInfo method, object key)
+        {
+            method = method.GetBaseDefinition();
+            return _spies.FirstOrDefault(x => x.Method == method && x.Key == key);
         }
 
         public void Dispose()
         {
-            _spyInfo.StopSpying(_key);
+            _spies.Remove(this);
+        }
+
+        internal static void ClearAll()
+        {
+            _spies.Clear();
         }
     }
 }

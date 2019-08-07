@@ -35,7 +35,10 @@ namespace JazSharp.Expectations
 
         public void ToBe(TValue expected)
         {
-            var conditionMet = _value != null && _value.GetType().IsValueType ? _value.Equals(expected) : ReferenceEquals(_value, expected);
+            var conditionMet =
+                _value != null && (_value.GetType().IsValueType || _value is string)
+                    ? _value.Equals(expected)
+                    : ReferenceEquals(_value, expected);
 
             ThrowIfFailed(
                 conditionMet,

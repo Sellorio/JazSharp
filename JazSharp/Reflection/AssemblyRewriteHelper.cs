@@ -166,7 +166,7 @@ namespace JazSharp.Reflection
 
                         if (parameterType.IsGenericParameter)
                         {
-                            parameterType = ResolveGenericParameter(parameterType, calledMethod.DeclaringType);
+                            parameterType = CecilHelper.ResolveGenericParameter(parameterType, calledMethod, calledMethod.DeclaringType);
                         }
 
                         genericMethod.GenericArguments.Add(parameterType);
@@ -179,23 +179,6 @@ namespace JazSharp.Reflection
             }
 
             return null;
-        }
-
-        private static TypeReference ResolveGenericParameter(TypeReference parameterType, TypeReference declaringType)
-        {
-            //TODO: Confirm this logic will work for a type nested in a generic type (with that type's method using the parent classes generic args).
-            if (declaringType is GenericInstanceType genericInstanceType)
-            {
-                var parameterIndex = int.Parse(parameterType.Name.Substring(1));
-                return genericInstanceType.GenericArguments[parameterIndex];
-            }
-
-            if (declaringType.IsNested)
-            {
-                return ResolveGenericParameter(parameterType, declaringType.DeclaringType);
-            }
-
-            throw new System.InvalidOperationException("Unable to resolve generic type parameter when rewriting the assembly.");
         }
 
         private static void SerializeGenericArguments(StringBuilder serializedInfo, Collection<TypeReference> genericArguments)

@@ -6,25 +6,25 @@ namespace JazSharp.Expectations
 {
     public class SpyExpect
     {
-        private readonly ISpy _spy;
+        private readonly Spy _spy;
         private readonly bool _inverted;
 
         public SpyExpect Not => new SpyExpect(_spy, !_inverted);
 
-        private SpyExpect(ISpy spy, bool inverted)
+        private SpyExpect(Spy spy, bool inverted)
             : this(spy)
         {
             _inverted = inverted;
         }
 
-        internal SpyExpect(ISpy spy)
+        internal SpyExpect(Spy spy)
         {
             _spy = spy;
         }
 
         public void ToHaveBeenCalled()
         {
-            var wasCalled = _spy.SpyInfo.CallsLog[_spy.Key].Count > 0;
+            var wasCalled = _spy.CallLog.Count > 0;
 
             if (!wasCalled && !_inverted)
             {
@@ -39,11 +39,11 @@ namespace JazSharp.Expectations
 
         public void ToHaveBeenCalledTimes(int count)
         {
-            var expectedCallCount = _spy.SpyInfo.CallsLog[_spy.Key].Count == count;
+            var expectedCallCount = _spy.CallLog.Count == count;
 
             if (!expectedCallCount && !_inverted)
             {
-                throw new JazExpectationException($"Expected spy to be called {count} times, but it was called {_spy.SpyInfo.CallsLog.Count} times.");
+                throw new JazExpectationException($"Expected spy to be called {count} times, but it was called {_spy.CallLog.Count} times.");
             }
 
             if (expectedCallCount && _inverted)
@@ -54,16 +54,14 @@ namespace JazSharp.Expectations
 
         public void ToHaveBeenCalledWith(params object[] parameters)
         {
-            if (parameters.Length != _spy.SpyInfo.Method.GetParameters().Length)
+            if (parameters.Length != _spy.Method.GetParameters().Length)
             {
                 throw new ArgumentException("Incorrect number of parameters specified for ToHaveBeenCalled.", nameof(parameters));
             }
 
-            var calls = _spy.SpyInfo.CallsLog[_spy.Key];
-
             var matchFound = false;
 
-            foreach (var call in calls)
+            foreach (var call in _spy.CallLog)
             {
                 var isMatch = true;
 
@@ -89,7 +87,7 @@ namespace JazSharp.Expectations
                     "Expected call to spy with [ "
                     + string.Join(", ", parameters)
                     + " ] but actual calls were ["
-                    + string.Join(", ", calls.Select(x => " [ " + string.Join(", ", x) + "]"))
+                    + string.Join(", ", _spy.CallLog.Select(x => " [ " + string.Join(", ", x) + "]"))
                     + " ].");
             }
 

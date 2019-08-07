@@ -14,7 +14,7 @@ namespace JazSharp.SpyLogic
     {
         internal static MethodInfo GetOrignalMethod(object[] parameters, bool expectingFunc)
         {
-            var stackTrace = new StackTrace();
+            var stackTrace = new StackTrace(true);
             var callingMethodFrame = stackTrace.GetFrame(3);
 
             return GetOriginalMethod(callingMethodFrame.GetMethod(), callingMethodFrame.GetILOffset(), parameters, expectingFunc);
@@ -25,23 +25,28 @@ namespace JazSharp.SpyLogic
             var instructions = GetMethodInstructions(callingMethod);
 
             var locatedMethod = default(GenericInstanceMethod);
-            var currentInstruction = instructions.LastOrDefault(x => x.Offset < callIlOffset) ?? instructions.First();
+            var currentInstruction = instructions.FirstOrDefault(x => x.Offset == callIlOffset) ?? instructions.First();
 
-            while (locatedMethod == null
-                || locatedMethod.Parameters.Count != parameters.Length
-                || locatedMethod.ReturnType.Name == "Void" == expectingFunc)
+            while (true)
             {
-                while (currentInstruction.OpCode != OpCodes.Callvirt && currentInstruction.OpCode != OpCodes.Call)
+                if (currentInstruction.OpCode == OpCodes.Callvirt || currentInstruction.OpCode == OpCodes.Call)
                 {
-                    if (currentInstruction.Next == null)
-                    {
-                        return null; // failed to find call (this shouldn't happen)
-                    }
-
-                    currentInstruction = currentInstruction.Next;
+                    locatedMethod = currentInstruction.Operand as GenericInstanceMethod;
                 }
 
-                locatedMethod = currentInstruction.Operand as GenericInstanceMethod;
+                if (locatedMethod != null
+                    && locatedMethod.Parameters.Count == parameters.Length
+                    && locatedMethod.ReturnType.Name == "Void" != expectingFunc)
+                {
+                    break;
+                }
+
+                if (currentInstruction.Next == null)
+                {
+                    throw new JazSpyException("Unable to resolve original method call from spy.");
+                }
+
+                currentInstruction = currentInstruction.Next;
             }
 
             var spyIndex = GetSpyIndex(instructions, currentInstruction);

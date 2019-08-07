@@ -1,4 +1,6 @@
-﻿using System;
+﻿using JazSharp.Spies;
+using JazSharp.SpyLogic.Behaviour;
+using System;
 using System.Linq;
 
 namespace JazSharp.SpyLogic
@@ -27,63 +29,22 @@ namespace JazSharp.SpyLogic
                 }
             }
 
-            var spyInfo = SpyInfo.Get(method);
+            var key = method.IsStatic ? string.Empty : instance;
+            var spy = Spy.Get(method, key);
 
-            if (spyInfo == null)
+            if (spy == null)
             {
                 return method.Invoke(instance, parameters);
             }
 
-            var key = spyInfo.Method.IsStatic ? string.Empty : instance;
+            spy.CallLog.Add(parameters);
 
-            // spy not configured for this instance/static scope
-            if (!spyInfo.CallsLog.ContainsKey(key))
+            if (!spy.Behaviours.Any())
             {
-                return method.Invoke(instance, parameters);
+                throw new JazSpyException("Unexpected call to spy after last behaviour/return value.");
             }
 
-            spyInfo.CallsLog[key].Add(parameters);
-
-            if (spyInfo.ThrowMapping.TryGetValue(key, out var exceptionToThrow))
-            {
-                throw exceptionToThrow;
-            }
-
-            var result =
-                spyInfo.CallThroughMapping[key]
-                    ? method.Invoke(instance, parameters)
-                    : HandleReturnValue(spyInfo, key);
-
-            return result;
-        }
-
-        private static object HandleReturnValue(SpyInfo spyInfo, object key)
-        {
-            if (spyInfo.ReturnValueMapping.ContainsKey(key))
-            {
-                return spyInfo.ReturnValueMapping[key];
-            }
-
-            if (spyInfo.ReturnValuesMapping.ContainsKey(key))
-            {
-                var returnValues = spyInfo.ReturnValuesMapping[key];
-
-                if (returnValues.Count == 0)
-                {
-                    throw new JazSpyException("Unexpected call to spy. Not enough return values have been provided.");
-                }
-
-                var result = returnValues.Dequeue();
-
-                return result;
-            }
-
-            return GetDefaultValue(spyInfo.Method.ReturnType);
-        }
-
-        private static object GetDefaultValue(Type type)
-        {
-            return type == typeof(void) || type.IsClass ? null : Activator.CreateInstance(type);
+            return spy.Behaviours.Peek().Execute(spy, instance, parameters);
         }
     }
 }

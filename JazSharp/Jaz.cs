@@ -29,14 +29,14 @@ namespace JazSharp
 
         internal static void SetupTestExecutionContext(string testDescription, StringBuilder output)
         {
-            SpyInfo.Clear();
+            Spy.ClearAll();
             CurrentTest = new TestExecutionContext(testDescription, output);
         }
 
         internal static void ClearTestExecutionContext()
         {
             CurrentTest = null;
-            SpyInfo.Clear();
+            Spy.ClearAll();
         }
 
         public static Spy SpyOn(object @object, string nameOfMethod)
@@ -75,9 +75,7 @@ namespace JazSharp
                 throw new ArgumentException("Name matches more than one methods.", nameof(nameOfMethod));
             }
 
-            var spyInfo = SpyCreator.CreateSpy(methods[0], @object);
-
-            return new Spy(spyInfo, @object);
+            return Spy.Create(methods[0], @object);
         }
 
         public static Spy SpyOn(Type type, string nameOfMethod)
@@ -116,9 +114,7 @@ namespace JazSharp
                 throw new ArgumentException("Name matches more than one static methods.", nameof(nameOfMethod));
             }
 
-            var spyInfo = SpyCreator.CreateSpy(methods[0], string.Empty);
-
-            return new Spy(spyInfo, string.Empty);
+            return Spy.Create(methods[0], string.Empty);
         }
 
         public static PropertySpy SpyOn<TObject, TProperty>(TObject @object, Expression<Func<TObject, TProperty>> property)
