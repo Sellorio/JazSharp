@@ -79,6 +79,7 @@ namespace JazSharp.Reflection
 
                     if (replacement != null)
                     {
+                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldstr, SerializeMethodCall(calledMethod)));
                         ilProcessor.Replace(instruction, replacement);
                     }
                 }
@@ -87,41 +88,6 @@ namespace JazSharp.Reflection
                     functionsAsParameters.Add((MethodReference)instruction.Operand);
                 }
             }
-
-            foreach (var replacedMethod in replacedMethods)
-            {
-                // Needed to get correct module/assembly for declaring type as well as the correct metadata token.
-                var resolvedReplacedMethod = replacedMethod.Resolve();
-                var serializedInfo = new StringBuilder();
-
-                serializedInfo
-                    .Append(resolvedReplacedMethod.DeclaringType.Module.Assembly.Name.Name)
-                    .Append(':')
-                    .Append(TypeName(resolvedReplacedMethod.DeclaringType));
-
-                if (replacedMethod.DeclaringType is GenericInstanceType genericType)
-                {
-                    SerializeGenericArguments(serializedInfo, genericType.GenericArguments);
-                }
-
-                serializedInfo
-                    .Append(':')
-                    .Append(MethodName(resolvedReplacedMethod));
-
-                if (replacedMethod is GenericInstanceMethod genericMethod)
-                {
-                    SerializeGenericArguments(serializedInfo, genericMethod.GenericArguments);
-                }
-
-                ilProcessor.Append(Instruction.Create(OpCodes.Ldstr, serializedInfo.ToString()));
-            }
-
-            if (dummyVariable != null)
-            {
-                ilProcessor.Append(Instruction.Create(OpCodes.Ldloc, dummyVariable));
-            }
-
-            ilProcessor.Append(Instruction.Create(OpCodes.Ret));
 
             processedMethods.Add(method);
 
@@ -179,6 +145,33 @@ namespace JazSharp.Reflection
             }
 
             return null;
+        }
+
+        private static string SerializeMethodCall(MethodReference method)
+        {
+            var resolvedReplacedMethod = method.Resolve();
+            var serializedInfo = new StringBuilder();
+
+            serializedInfo
+                .Append(resolvedReplacedMethod.DeclaringType.Module.Assembly.Name.Name)
+                .Append(':')
+                .Append(TypeName(resolvedReplacedMethod.DeclaringType));
+
+            if (method.DeclaringType is GenericInstanceType genericType)
+            {
+                SerializeGenericArguments(serializedInfo, genericType.GenericArguments);
+            }
+
+            serializedInfo
+                .Append(':')
+                .Append(MethodName(resolvedReplacedMethod));
+
+            if (method is GenericInstanceMethod genericMethod)
+            {
+                SerializeGenericArguments(serializedInfo, genericMethod.GenericArguments);
+            }
+
+            return serializedInfo.ToString();
         }
 
         private static void SerializeGenericArguments(StringBuilder serializedInfo, Collection<TypeReference> genericArguments)

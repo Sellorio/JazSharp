@@ -1,5 +1,4 @@
 ﻿using JazSharp.Spies;
-using JazSharp.SpyLogic.Behaviour;
 using System;
 using System.Linq;
 
@@ -7,9 +6,9 @@ namespace JazSharp.SpyLogic
 {
     internal static class SpyExecutionHelper
     {
-        internal static object HandleCall(object[] parameters, bool isFunc)
+        internal static object HandleCall(object[] parameters, string serializedMethodCallInfo)
         {
-            var method = OriginalMethodHelper.GetOrignalMethod(parameters, isFunc);
+            var method = OriginalMethodHelper.GetMethod(serializedMethodCallInfo);
 
             if (method == null)
             {

@@ -90,7 +90,7 @@ namespace JazSharp.Tests
                         }
                         catch (Exception ex)
                         {
-                            if (!string.IsNullOrEmpty(ex.Message))
+                            if (ex.Message != "Exception of type 'System.Exception' was thrown.")
                             {
                                 throw;
                             }
@@ -122,10 +122,12 @@ namespace JazSharp.Tests
                         Expect(result).ToBe("abc");
                     });
 
-                    It("should execute once if added using Then.", () =>
+                    It("should execute once after default if added using Then.", () =>
                     {
                         Jaz.SpyOn(testSubject, nameof(testSubject.Func)).Then.ReturnValue("abc");
                         var result = testSubject.Func();
+                        Expect(result).ToBeDefault();
+                        result = testSubject.Func();
                         Expect(result).ToBe("abc");
 
                         try
