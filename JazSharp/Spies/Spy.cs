@@ -39,6 +39,7 @@ namespace JazSharp.Spies
         internal static Spy Get(MethodInfo method, object key)
         {
             method = method.GetBaseDefinition();
+            method = method.IsGenericMethod ? method.GetGenericMethodDefinition() : method;
             return _spies.FirstOrDefault(x => x.Method == method && x.Key == key);
         }
 

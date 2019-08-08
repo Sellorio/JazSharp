@@ -1,4 +1,5 @@
 ﻿using JazSharp.Spies;
+using System.Reflection;
 
 namespace JazSharp.SpyLogic.Behaviour
 {
@@ -21,6 +22,12 @@ namespace JazSharp.SpyLogic.Behaviour
         /// The information for the spy.
         /// </summary>
         internal Spy Spy { get; }
+
+        /// <summary>
+        /// The exact method that the spy wraps. This should be used instead of <see cref="Spy.Method"/>
+        /// since it preserves inheritance and generic parameters.
+        /// </summary>
+        internal MethodInfo ExactMethod { get; }
 
         /// <summary>
         /// Whether or not the <see cref="ISpyFeature"/> has set the <see cref="Result"/>
@@ -47,9 +54,10 @@ namespace JazSharp.SpyLogic.Behaviour
         /// </summary>
         internal bool FeatureCompleted { get; set; }
 
-        internal BehaviourArgs(Spy spy, object instance, object[] parameters)
+        internal BehaviourArgs(Spy spy, MethodInfo exactMethod, object instance, object[] parameters)
         {
             Spy = spy;
+            ExactMethod = exactMethod;
             Instance = instance;
             Parameters = parameters;
         }

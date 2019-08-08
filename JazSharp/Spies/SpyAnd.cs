@@ -47,11 +47,6 @@ namespace JazSharp.Spies
                 throw new InvalidOperationException("Cannot specify a return value to use for an action.");
             }
 
-            if (value == null && !_spy.Method.ReturnType.IsClass || value != null && !_spy.Method.ReturnType.IsInstanceOfType(value))
-            {
-                throw new ArgumentException("Value is not compatible with the method's return type.");
-            }
-
             _spy.Behaviours.Clear();
             var behaviour = new ReturnValueBehaviour(value);
             behaviour.UpdateLifetime(int.MaxValue);

@@ -43,7 +43,7 @@ namespace JazSharp.SpyLogic
                 throw new JazSpyException("Unexpected call to spy after last behaviour/return value.");
             }
 
-            return spy.Behaviours.Peek().Execute(spy, instance, parameters);
+            return spy.Behaviours.Peek().Execute(spy, method, instance, parameters);
         }
     }
 }
