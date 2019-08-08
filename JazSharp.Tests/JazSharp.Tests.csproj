@@ -13,6 +13,7 @@
   
   <ItemGroup>
     <ProjectReference Include="..\JazSharp.TestAdapter\JazSharp.TestAdapter.csproj" />
+    <ProjectReference Include="..\JazSharp.Tests.ForReference\JazSharp.Tests.ForReference.csproj" />
     <ProjectReference Include="..\JazSharp\JazSharp.csproj" />
   </ItemGroup>
 

@@ -211,7 +211,16 @@ namespace JazSharp.Testing
                 {
                     var newSourcePath = source.Replace(directory.Key, shadowcopyTargetDirectory);
                     sources.Add(newSourcePath);
-                    AssemblyRewriteHelper.RewriteAssembly(newSourcePath, testCollection);
+                }
+
+                foreach (var dll in Directory.GetFiles(shadowcopyTargetDirectory, "*.dll", SearchOption.TopDirectoryOnly))
+                {
+                    var dllLower = Path.GetFileNameWithoutExtension(dll).ToLower();
+
+                    if (dllLower != "jazsharp" && dllLower != "jazsharp.testadapter")
+                    {
+                        AssemblyRewriteHelper.RewriteAssembly(dll);
+                    }
                 }
             }
 

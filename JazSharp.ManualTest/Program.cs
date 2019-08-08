@@ -13,16 +13,11 @@ namespace JazSharp.ManualTest
     {
         static void Main(string[] _)
         {
-            //using (var testCollection = TestCollection.FromSources(new[] { @"C:\Users\seamillo\source\repos\JazSharp\JazSharp.Tests\bin\Debug\netcoreapp2.2\JazSharp.Tests.dll" }))
-            //using (var testRun = testCollection.CreateTestRun())
-            //{
-            //    var result = testRun.ExecuteAsync().Result;
-            //}
-
-            var disco = new TestDiscoverer();
-            var sink = new MockSink();
-            disco.DiscoverTests(new[] { @"C:\Users\seamillo\source\repos\JazSharp\JazSharp.Tests\bin\Debug\netcoreapp2.2\JazSharp.Tests.dll" }, null, new MockLogger(), sink);
-            var serialized = JsonConvert.SerializeObject(sink.TestCases);
+            using (var testCollection = TestCollection.FromSources(new[] { @"C:\Users\seamillo\source\repos\JazSharp\JazSharp.Tests\bin\Debug\netcoreapp2.2\JazSharp.Tests.dll" }))
+            using (var testRun = testCollection.CreateTestRun())
+            {
+                var result = testRun.ExecuteAsync().Result;
+            }
         }
 
         private class MockLogger : IMessageLogger
