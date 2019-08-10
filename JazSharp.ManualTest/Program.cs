@@ -1,11 +1,4 @@
-﻿using JazSharp.TestAdapter;
-using JazSharp.Testing;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Linq;
+﻿using JazSharp.Testing;
 
 namespace JazSharp.ManualTest
 {
@@ -17,23 +10,6 @@ namespace JazSharp.ManualTest
             using (var testRun = testCollection.CreateTestRun())
             {
                 var result = testRun.ExecuteAsync().Result;
-            }
-        }
-
-        private class MockLogger : IMessageLogger
-        {
-            public void SendMessage(TestMessageLevel testMessageLevel, string message)
-            {
-            }
-        }
-
-        private class MockSink : ITestCaseDiscoverySink
-        {
-            public List<TestCase> TestCases { get; } = new List<TestCase>();
-
-            public void SendTestCase(TestCase discoveredTest)
-            {
-                TestCases.Add(discoveredTest);
             }
         }
     }

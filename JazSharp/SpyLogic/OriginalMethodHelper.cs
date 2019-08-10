@@ -1,5 +1,6 @@
 ﻿using JazSharp.Testing;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -22,66 +23,70 @@ namespace JazSharp.SpyLogic
             typeof(decimal).ToString()
         };
 
-        internal static MethodInfo GetMethod(string serializedInfo)
+        internal static MethodInfo GetMethod(string serializedInfo, Type calledMethodType)
         {
             var callingMethod = new StackTrace().GetFrame(3).GetMethod();
 
             var path = serializedInfo.Split(':');
             var assembly = GetAssembly(path[0]);
 
-            var typeInfo = path[1];
-            var indexOfGeneric = typeInfo.IndexOf('?');
-            var typeName = indexOfGeneric == -1 ? typeInfo : typeInfo.Substring(0, indexOfGeneric);
-            var genericTypeArgs = indexOfGeneric == -1 ? null : typeInfo.Substring(indexOfGeneric + 1).Split(' ').Select(x => GetType(x, callingMethod)).ToArray();
-            var genericDefinition = assembly.GetType(typeName);
-            var type = genericDefinition;
+            //var typeInfo = path[1];
+            //var indexOfGeneric = typeInfo.IndexOf('?');
+            //var typeName = indexOfGeneric == -1 ? typeInfo : typeInfo.Substring(0, indexOfGeneric);
+            //var genericTypeArgs = indexOfGeneric == -1 ? null : typeInfo.Substring(indexOfGeneric + 1).Split(' ').Select(x => GetType(x, genericTypeMapping)).ToArray();
+            //var genericDefinition = assembly.GetType(typeName);
+            //var type = genericDefinition;
 
-            if (genericDefinition.IsGenericTypeDefinition)
-            {
-                type = genericDefinition.MakeGenericType(genericTypeArgs);
-            }
+            //if (genericDefinition.IsGenericTypeDefinition)
+            //{
+            //    type = genericDefinition.MakeGenericType(genericTypeArgs);
+            //}
+
+            var type = calledMethodType;
 
             var methodInfo = path[2];
-            indexOfGeneric = methodInfo.IndexOf('?');
+            var indexOfGeneric = methodInfo.IndexOf('?');
             var methodDescription = indexOfGeneric == -1 ? methodInfo : methodInfo.Substring(0, indexOfGeneric);
-            var genericMethodArgs = indexOfGeneric == -1 ? null : methodInfo.Substring(indexOfGeneric + 1).Split(' ').Select(x => GetType(x, callingMethod)).ToArray();
+            var genericMethodArgs = indexOfGeneric == -1 ? null : methodInfo.Substring(indexOfGeneric + 1).Split(' ').Select(GetType).ToArray();
 
-            if (genericDefinition.IsGenericTypeDefinition)
+            MethodInfo matchedMethod = null;
+
+            if (type.IsGenericType)
             {
-                // replace references to class generic types in parameters
-                methodDescription =
-                    Regex.Replace(
-                        methodDescription,
-                        @"([\[,])([a-zA-Z0-9_]+)([\],])",
-                        x => x.Groups[1].Value + ResolveClassGenericParameterReferences(x.Groups[2].Value, genericDefinition, type) + x.Groups[3].Value);
-
-                // replaces references to class generic types in return type
-                methodDescription =
-                    Regex.Replace(
-                        methodDescription,
-                        "^[a-zA-Z0-9_]+ ",
-                        x => ResolveClassGenericParameterReferences(x.Value.Substring(0, x.Value.Length - 1), genericDefinition, type, true) + ' ');
+                var genericDefinition = type.GetGenericTypeDefinition();
+                var methods = genericDefinition.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+                
+                for (var i = 0; i < methods.Length; i++)
+                {
+                    if (methods[i].ToString() == methodDescription)
+                    {
+                        matchedMethod = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)[i];
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                matchedMethod =
+                    type
+                        .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+                        .FirstOrDefault(x => x.ToString() == methodDescription);
             }
 
-            var method =
-                type
-                    .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-                    .FirstOrDefault(x => x.ToString() == methodDescription);
-
-            if (method == null)
+            if (matchedMethod == null)
             {
                 throw new JazSpyException("Unable to resolve original method call from spy.");
             }
 
-            if (method.IsGenericMethodDefinition)
+            if (matchedMethod.IsGenericMethodDefinition)
             {
-                method = method.MakeGenericMethod(genericMethodArgs);
+                matchedMethod = matchedMethod.MakeGenericMethod(genericMethodArgs);
             }
 
-            return method;
+            return matchedMethod;
         }
 
-        private static Type GetType(string serializedInfo, MethodBase callingMethod)
+        private static Type GetType(string serializedInfo)
         {
             if (serializedInfo.Contains('/'))
             {
