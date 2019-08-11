@@ -4,9 +4,11 @@ using System.Linq;
 
 namespace JazSharp.Spies
 {
-    public class SpyThen
+    public class SpyThen : ISpy
     {
         private readonly Spy _spy;
+
+        Spy ISpy.Spy => _spy;
 
         internal SpyThen(Spy spy)
         {
@@ -45,11 +47,6 @@ namespace JazSharp.Spies
             if (_spy.Method.ReturnType == typeof(void))
             {
                 throw new InvalidOperationException("Cannot specify a return value to use for an action.");
-            }
-
-            if (!_spy.Method.ReturnType.IsInstanceOfType(value))
-            {
-                throw new ArgumentException("Value is not compatible with the method's return type.");
             }
 
             var behaviour = new ReturnValueBehaviour(value);

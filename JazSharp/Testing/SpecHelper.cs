@@ -8,7 +8,6 @@ namespace JazSharp.Testing
     {
         private static Stack<DescribeStackItem> _describeStack;
         private static Dictionary<Test, DescribeStackItem> _tests;
-        private static List<TestExecution> _executions;
         private static Type _testClass;
 
         internal static void PushDescribe(string description, bool isFocused, bool isExcluded)
@@ -55,7 +54,7 @@ namespace JazSharp.Testing
             }
 
             var actualIsExcluded = isExcluded || _describeStack.Any(x => x.IsExcluded);
-            var actualIsFocused = !actualIsExcluded && isFocused || _describeStack.Any(x => x.IsFocused);
+            var actualIsFocused = !actualIsExcluded && (isFocused || _describeStack.Any(x => x.IsFocused));
 
             _tests.Add(
                 new Test(
@@ -111,8 +110,6 @@ namespace JazSharp.Testing
                 }
             }
 
-            _executions = null;
-
             return result;
         }
 
@@ -122,12 +119,12 @@ namespace JazSharp.Testing
 
             do
             {
-                result.AddRange(describeStackItem.BeforeEach);
+                result.InsertRange(0, describeStackItem.BeforeEach);
                 describeStackItem = describeStackItem.Parent;
             }
             while (describeStackItem != null);
 
-            return Enumerable.Reverse(result);
+            return result;
         }
 
         private static IEnumerable<Delegate> GetAfterEachMethods(DescribeStackItem describeStackItem)

@@ -1,14 +1,15 @@
 ﻿using JazSharp.Spies;
 using System;
 using System.Linq;
+using System.Reflection;
 
 namespace JazSharp.SpyLogic
 {
     internal static class SpyExecutionHelper
     {
-        internal static object HandleCall(object[] parameters, string serializedMethodCallInfo)
+        internal static object HandleCall(object[] parameters, MethodBase originalMethod)
         {
-            var method = OriginalMethodHelper.GetMethod(serializedMethodCallInfo);
+            var method = originalMethod as MethodInfo;
 
             if (method == null)
             {
@@ -43,7 +44,7 @@ namespace JazSharp.SpyLogic
                 throw new JazSpyException("Unexpected call to spy after last behaviour/return value.");
             }
 
-            return spy.Behaviours.Peek().Execute(spy, instance, parameters);
+            return spy.Behaviours.Peek().Execute(spy, method, instance, parameters);
         }
     }
 }

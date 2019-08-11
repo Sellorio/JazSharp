@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace JazSharp.Testing.ExecutionContext
+namespace JazSharp.Testing
 {
     /// <summary>
     /// The context for the current test's execution. This can be used to write custom

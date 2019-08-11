@@ -1,68 +1,60 @@
 ﻿using JazSharp.SpyLogic;
-using JazSharp.Testing;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace JazSharp.Reflection
 {
     internal static class AssemblyRewriteHelper
     {
+        private static MethodInfo GetMethodFromHandleMethod =
+            typeof(MethodBase)
+                .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                .First(x => x.Name == "GetMethodFromHandle" && x.GetParameters().Length == 2);
+
         private static readonly string[] DoNotWrapAssemblies =
         {
             typeof(Jaz).Assembly.GetName().Name
         };
 
-        private static readonly string[] DoNotRecurseAssemblies =
+        internal static void RewriteAssembly(string filename)
         {
-            "System.Private.CoreLib",
-            "System.Console",
-            typeof(Jaz).Assembly.GetName().Name
-        };
-
-        private static readonly string[] BuiltInValueTypes =
-        {
-            typeof(void).ToString(),
-            typeof(bool).ToString(),
-            typeof(byte).ToString(),
-            typeof(short).ToString(),
-            typeof(int).ToString(),
-            typeof(long).ToString(),
-            typeof(float).ToString(),
-            typeof(double).ToString(),
-            typeof(decimal).ToString()
-        };
-
-        internal static void RewriteAssembly(string filename, TestCollection forTests)
-        {
-            var anyFocused = forTests.Tests.Any(x => x.IsFocused);
-
             using (var assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true, ReadSymbols = true }))
             {
-                foreach (var test in forTests.Tests.Where(x => (!anyFocused || x.IsFocused) && !x.IsExcluded && x.Execution.Main.Method.Module.Assembly.FullName == assembly.FullName))
+                foreach (var type in assembly.MainModule.Types.Where(x => !x.IsInterface))
                 {
-                    foreach (var @delegate in test.Execution.GetDelegates())
-                    {
-                        var testMethod = (MethodDefinition)assembly.MainModule.LookupToken(@delegate.Method.MetadataToken);
-                        RewriteAssembly(testMethod, new List<MethodDefinition>());
-                    }
+                    RewriteType(type);
                 }
 
                 assembly.Write(new WriterParameters { WriteSymbols = true });
             }
         }
 
-        private static void RewriteAssembly(MethodDefinition method, List<MethodDefinition> processedMethods)
+        private static void RewriteType(TypeDefinition type)
         {
-            var ilProcessor = method.Body.GetILProcessor();
-            var replacedMethods = new List<MethodReference>();
-            var functionsAsParameters = new List<MethodReference>();
+            foreach (var method in type.Methods.Where(x => !x.IsAbstract))
+            {
+                RewriteMethod(method);
+            }
 
-            // needs to be for to stop exception when replacing instructions
+            foreach (var subType in type.NestedTypes.Where(x => !x.IsInterface))
+            {
+                RewriteType(subType);
+            }
+        }
+
+        private static void RewriteMethod(MethodDefinition method)
+        {
+            var getMethodByTokenMethod = method.Module.ImportReference(GetMethodFromHandleMethod);
+            var ilProcessor = method.Body.GetILProcessor();
+
+            // needs to be for loop to stop exception when replacing instructions
             for (var i = 0; i < method.Body.Instructions.Count; i++)
             {
                 var instruction = method.Body.Instructions[i];
@@ -70,50 +62,45 @@ namespace JazSharp.Reflection
                 if (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)
                 {
                     var calledMethod = (MethodReference)instruction.Operand;
-                    var replacement = GetSpyInstruction(method.Module, calledMethod, replacedMethods);
+                    var replacement = GetSpyInstruction(method.Module, calledMethod);
 
                     if (replacement != null)
                     {
-                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldstr, SerializeMethodCall(calledMethod)));
+                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, calledMethod));
+                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, calledMethod.DeclaringType));
+                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Call, getMethodByTokenMethod));
+
+                        i += 3; // skip past newly inserted instructions
+
                         ilProcessor.Replace(instruction, replacement);
                     }
                 }
-                else if (instruction.OpCode == OpCodes.Ldftn)
-                {
-                    functionsAsParameters.Add((MethodReference)instruction.Operand);
-                }
-            }
-
-            processedMethods.Add(method);
-
-            var methodsToRewrite =
-                Enumerable.Concat(replacedMethods, functionsAsParameters)
-                    .Select(x => x as MethodDefinition ?? x.Resolve())
-                    .Where(x => x != null && !DoNotRecurseAssemblies.Contains(x.DeclaringType.Module.Assembly.Name.Name))
-                    .Except(processedMethods)
-                    .ToList();
-
-            foreach (var methodToRewrite in methodsToRewrite)
-            {
-                RewriteAssembly(methodToRewrite, processedMethods);
             }
         }
 
-        private static Instruction GetSpyInstruction(ModuleDefinition module, MethodReference calledMethod, List<MethodReference> replacedMethods)
+        private static Instruction GetSpyInstruction(ModuleDefinition module, MethodReference calledMethod)
         {
             if (calledMethod != null)
             {
                 if (!DoNotWrapAssemblies.Contains(calledMethod.DeclaringType.Resolve().Module.Assembly.Name.Name))
                 {
+                    var resolvedMethod = calledMethod.Resolve();
+
+                    if (resolvedMethod != null && resolvedMethod.IsConstructor)
+                    {
+                        return null;
+                    }
+
                     var isFunc = calledMethod.ReturnType.FullName != "System.Void";
                     var parameterCount = !calledMethod.HasThis ? calledMethod.Parameters.Count : calledMethod.Parameters.Count + 1;
                     var entryMethodName = (isFunc ? "Func" : "Action") + parameterCount;
                     var entryMethod = typeof(SpyEntryPoints).GetMethod(entryMethodName, BindingFlags.Static | BindingFlags.Public);
-                    var genericMethod = new GenericInstanceMethod(module.ImportReference(entryMethod));
+                    var spyMethod = module.ImportReference(entryMethod);
+                    var genericMethod = new GenericInstanceMethod(spyMethod);
 
                     if (isFunc)
                     {
-                        genericMethod.GenericArguments.Add(calledMethod.ReturnType);
+                        genericMethod.GenericArguments.Add(ResolveTypeIfGeneric(calledMethod, calledMethod.ReturnType));
                     }
 
                     if (calledMethod.HasThis)
@@ -123,17 +110,8 @@ namespace JazSharp.Reflection
 
                     foreach (var parameter in calledMethod.Parameters)
                     {
-                        var parameterType = parameter.ParameterType;
-
-                        if (parameterType.IsGenericParameter)
-                        {
-                            parameterType = CecilHelper.ResolveGenericParameter(parameterType, calledMethod, calledMethod.DeclaringType);
-                        }
-
-                        genericMethod.GenericArguments.Add(parameterType);
+                        genericMethod.GenericArguments.Add(ResolveTypeIfGeneric(calledMethod, parameter.ParameterType));
                     }
-
-                    replacedMethods.Add(calledMethod);
 
                     return Instruction.Create(OpCodes.Call, genericMethod);
                 }
@@ -142,63 +120,96 @@ namespace JazSharp.Reflection
             return null;
         }
 
-        private static string SerializeMethodCall(MethodReference method)
+        private static TypeReference ResolveTypeIfGeneric(MethodReference method, TypeReference type)
         {
-            var resolvedReplacedMethod = method.Resolve();
-            var serializedInfo = new StringBuilder();
-
-            serializedInfo
-                .Append(resolvedReplacedMethod.DeclaringType.Module.Assembly.Name.Name)
-                .Append(':')
-                .Append(TypeName(resolvedReplacedMethod.DeclaringType));
-
-            if (method.DeclaringType is GenericInstanceType genericType)
+            // reference to a type parameter on the method or it's declaring type
+            if (type.IsGenericParameter)
             {
-                SerializeGenericArguments(serializedInfo, genericType.GenericArguments);
-            }
+                int genericParameterIndex = -1;
+                IGenericInstance genericArgSource = null;
 
-            serializedInfo
-                .Append(':')
-                .Append(MethodName(resolvedReplacedMethod));
+                // references like !0 and !!0
+                var indexBasedMatch = Regex.Match(type.Name, @"^\!(\!|)([0-9]+)$");
 
-            if (method is GenericInstanceMethod genericMethod)
-            {
-                SerializeGenericArguments(serializedInfo, genericMethod.GenericArguments);
-            }
-
-            return serializedInfo.ToString();
-        }
-
-        private static void SerializeGenericArguments(StringBuilder serializedInfo, Collection<TypeReference> genericArguments)
-        {
-            serializedInfo.Append('?');
-            var first = true;
-
-            foreach (var arg in genericArguments)
-            {
-                if (!first)
+                if (indexBasedMatch.Success)
                 {
-                    serializedInfo.Append(' ');
+                    genericParameterIndex = int.Parse(indexBasedMatch.Groups[2].Value);
+
+                    if (indexBasedMatch.Groups[1].Value != string.Empty)
+                    {
+                        genericArgSource = (GenericInstanceMethod)method;
+                    }
+                    else
+                    {
+                        genericArgSource = (GenericInstanceType)method.DeclaringType;
+                    }
+                }
+                else // references like TValue
+                {
+                    if (method is GenericInstanceMethod genericMethod)
+                    {
+                        var definition = genericMethod.Resolve();
+                        var indexOfGenericParameter = IndexOfItem(definition.GenericParameters, x => x.Name == type.Name);
+
+                        if (indexOfGenericParameter != -1)
+                        {
+                            genericParameterIndex = indexOfGenericParameter;
+                            genericArgSource = genericMethod;
+                        }
+                    }
+
+                    if (genericArgSource == null && method.DeclaringType is GenericInstanceType genericType)
+                    {
+                        var definition = genericType.Resolve();
+                        var indexOfGenericParameter = IndexOfItem(definition.GenericParameters, x => x.Name == type.Name);
+
+                        if (indexOfGenericParameter != -1)
+                        {
+                            genericParameterIndex = indexOfGenericParameter;
+                            genericArgSource = genericType;
+                        }
+                    }
                 }
 
-                var resolvedArg = arg.Resolve();
-                serializedInfo
-                    .Append(resolvedArg.Module.Assembly.Name.Name)
-                    .Append('/')
-                    .Append(TypeName(resolvedArg));
+                if (genericParameterIndex == -1 || genericArgSource == null)
+                {
+                    throw new InvalidOperationException("Failed to resolve generic parameter when rewriting assembly.");
+                }
 
-                first = false;
+                return genericArgSource.GenericArguments[genericParameterIndex];
             }
+            else if (type is GenericInstanceType genericType)
+            {
+                TypeReference genericTypeDefinition = genericType.Resolve();
+                genericTypeDefinition = method.Module.ImportReference(genericTypeDefinition);
+                var result = new GenericInstanceType(genericTypeDefinition);
+
+                foreach (var arg in ((GenericInstanceType)type).GenericArguments)
+                {
+                    result.GenericArguments.Add(ResolveTypeIfGeneric(method, arg));
+                }
+
+                return result;
+            }
+
+            return type;
         }
 
-        private static string TypeName(TypeDefinition type)
+        private static int IndexOfItem<TObject>(IEnumerable<TObject> enumerable, Func<TObject, bool> matcher)
         {
-            return BuiltInValueTypes.Contains(type.ToString()) ? type.Name : type.ToString().Replace('/', '+');
-        }
+            var index = 0;
 
-        private static string MethodName(MethodDefinition method)
-        {
-            return $"{TypeName(method.ReturnType.Resolve())} {method.Name}({string.Join(", ", method.Parameters.Select(x => TypeName(x.ParameterType.Resolve())))})";
+            foreach (var item in enumerable)
+            {
+                if (matcher.Invoke(item))
+                {
+                    return index;
+                }
+
+                index++;
+            }
+
+            return -1;
         }
     }
 }

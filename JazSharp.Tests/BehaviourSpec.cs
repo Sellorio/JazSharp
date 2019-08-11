@@ -122,9 +122,9 @@ namespace JazSharp.Tests
                         Expect(result).ToBe("abc");
                     });
 
-                    It("should execute once after default if added using Then.", () =>
+                    It("should execute once if added using Then.", () =>
                     {
-                        Jaz.SpyOn(testSubject, nameof(testSubject.Func)).Then.ReturnValue("abc");
+                        Jaz.SpyOn(testSubject, nameof(testSubject.Func)).And.ReturnValue(null).Then.ReturnValue("abc");
                         var result = testSubject.Func();
                         Expect(result).ToBeDefault();
                         result = testSubject.Func();

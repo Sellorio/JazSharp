@@ -1,5 +1,6 @@
 ﻿using JazSharp.Spies;
 using System;
+using System.Reflection;
 
 namespace JazSharp.SpyLogic.Behaviour
 {
@@ -9,9 +10,9 @@ namespace JazSharp.SpyLogic.Behaviour
 
         internal int Lifetime { get; private set; }
 
-        internal object Execute(Spy spy, object instance, object[] parameters)
+        internal object Execute(Spy spy, MethodInfo exactMethod, object instance, object[] parameters)
         {
-            var args = new BehaviourArgs(spy, instance, parameters);
+            var args = new BehaviourArgs(spy, exactMethod, instance, parameters);
 
             Execute(args);
 
@@ -22,7 +23,7 @@ namespace JazSharp.SpyLogic.Behaviour
                 spy.Behaviours.Dequeue();
             }
 
-            return args.HasResult ? args.Result : GetDefaultValue(spy.Method.ReturnType);
+            return args.HasResult ? args.Result : GetDefaultValue(exactMethod.ReturnType);
         }
 
         internal void UpdateLifetime(int lifetime)

@@ -4,7 +4,7 @@
     {
         protected override void Execute(BehaviourArgs args)
         {
-            args.Result = args.Spy.Method.Invoke(args.Instance, args.Parameters);
+            args.Result = args.ExactMethod.Invoke(args.Instance, args.Parameters);
         }
     }
 }

@@ -2,12 +2,14 @@
 
 namespace JazSharp.Spies
 {
-    public class SpyWithBehaviour
+    public class SpyWithBehaviour : ISpy
     {
         private readonly Spy _spy;
         private readonly SpyBehaviourBase _behaviour;
 
         public SpyThen Then => new SpyThen(_spy);
+
+        Spy ISpy.Spy => _spy;
 
         internal SpyWithBehaviour(Spy spy, SpyBehaviourBase behaviour)
         {
@@ -15,28 +17,28 @@ namespace JazSharp.Spies
             _behaviour = behaviour;
         }
 
-        public Spy Once()
+        public SpyWithQuantifiedBehaviour Once()
         {
             _behaviour.UpdateLifetime(1);
-            return _spy;
+            return new SpyWithQuantifiedBehaviour(_spy);
         }
 
-        public Spy Twice()
+        public SpyWithQuantifiedBehaviour Twice()
         {
             _behaviour.UpdateLifetime(2);
-            return _spy;
+            return new SpyWithQuantifiedBehaviour(_spy);
         }
 
-        public Spy Times(int repetitions)
+        public SpyWithQuantifiedBehaviour Times(int repetitions)
         {
             _behaviour.UpdateLifetime(repetitions);
-            return _spy;
+            return new SpyWithQuantifiedBehaviour(_spy);
         }
 
-        public Spy Forever()
+        public SpyWithQuantifiedBehaviour Forever()
         {
             _behaviour.UpdateLifetime(int.MaxValue);
-            return _spy;
+            return new SpyWithQuantifiedBehaviour(_spy);
         }
     }
 }

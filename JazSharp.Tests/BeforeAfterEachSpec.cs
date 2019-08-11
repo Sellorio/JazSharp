@@ -14,12 +14,18 @@
                     Jaz.CurrentTest.Output.AppendLine("A");
                 });
 
+                BeforeEach(() =>
+                {
+                    _orderedKey += "B";
+                    Jaz.CurrentTest.Output.AppendLine("B");
+                });
+
                 Describe("when scoped", () =>
                 {
                     BeforeEach(() =>
                     {
-                        _orderedKey += "B";
-                        Jaz.CurrentTest.Output.AppendLine("B");
+                        _orderedKey += "C";
+                        Jaz.CurrentTest.Output.AppendLine("C");
                     });
 
                     It("should run out-in and in-out respectively.", () =>
@@ -28,8 +34,8 @@
 
                     AfterEach(() =>
                     {
-                        _orderedKey += "B";
-                        Jaz.CurrentTest.Output.AppendLine("B");
+                        _orderedKey += "C";
+                        Jaz.CurrentTest.Output.AppendLine("C");
                     });
                 });
 
@@ -37,22 +43,28 @@
                 {
                     BeforeEach(() =>
                     {
-                        _orderedKey += "C";
-                        Jaz.CurrentTest.Output.AppendLine("C");
+                        _orderedKey += "E";
+                        Jaz.CurrentTest.Output.AppendLine("E");
                     });
 
                     AfterEach(() =>
                     {
-                        _orderedKey += "C";
-                        Jaz.CurrentTest.Output.AppendLine("C");
+                        _orderedKey += "E";
+                        Jaz.CurrentTest.Output.AppendLine("E");
                     });
+                });
+
+                AfterEach(() =>
+                {
+                    _orderedKey += "B";
+                    Jaz.CurrentTest.Output.AppendLine("B");
                 });
 
                 AfterEach(() =>
                 {
                     _orderedKey += "A";
                     Jaz.CurrentTest.Output.AppendLine("A");
-                    Expect(_orderedKey).ToBe("ABBA");
+                    Expect(_orderedKey).ToBe("ABCCBA");
                 });
             });
         }

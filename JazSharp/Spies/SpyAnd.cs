@@ -3,9 +3,11 @@ using System;
 
 namespace JazSharp.Spies
 {
-    public class SpyAnd
+    public class SpyAnd : ISpy
     {
         private readonly Spy _spy;
+
+        Spy ISpy.Spy => _spy;
 
         internal SpyAnd(Spy spy)
         {
@@ -47,11 +49,6 @@ namespace JazSharp.Spies
                 throw new InvalidOperationException("Cannot specify a return value to use for an action.");
             }
 
-            if (value == null && !_spy.Method.ReturnType.IsClass || value != null && !_spy.Method.ReturnType.IsInstanceOfType(value))
-            {
-                throw new ArgumentException("Value is not compatible with the method's return type.");
-            }
-
             _spy.Behaviours.Clear();
             var behaviour = new ReturnValueBehaviour(value);
             behaviour.UpdateLifetime(int.MaxValue);
@@ -62,7 +59,7 @@ namespace JazSharp.Spies
         public Spy ReturnValues(params object[] values)
         {
             _spy.Behaviours.Clear();
-            _spy.Then.ReturnValues(values);
+            new SpyThen(_spy).ReturnValues(values);
 
             return _spy;
         }

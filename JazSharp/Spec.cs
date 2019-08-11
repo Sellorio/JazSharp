@@ -107,6 +107,16 @@ namespace JazSharp
             return new SpyExpect(spy);
         }
 
+        public static SpyExpect Expect(SpyWithBehaviour spy)
+        {
+            return new SpyExpect(((ISpy)spy).Spy);
+        }
+
+        public static SpyExpect Expect(SpyWithQuantifiedBehaviour spy)
+        {
+            return new SpyExpect(((ISpy)spy).Spy);
+        }
+
         public static CallExpect Expect(Action call)
         {
             Exception exception = null;
