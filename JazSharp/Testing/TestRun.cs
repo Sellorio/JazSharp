@@ -131,6 +131,7 @@ namespace JazSharp.Testing
 
             Stopwatch stopwatch = new Stopwatch();
             StringBuilder output = new StringBuilder();
+            Exception exception = null;
             TestResult testResult;
 
             await Jaz.CurrentTestSemaphore.WaitAsync();
@@ -165,12 +166,20 @@ namespace JazSharp.Testing
                     }
 
                     stopwatch.Stop();
-                    output.Append("\r\nTest completed successfully.");
+                    output.Append(Environment.NewLine).Append("Test completed successfully.");
                     testResult = TestResult.Passed;
                 }
                 catch (Exception ex)
                 {
-                    output.Append("\r\n").Append(ex.ToString());
+                    var innermostException = ex;
+
+                    while (innermostException.InnerException != null)
+                    {
+                        innermostException = innermostException.InnerException;
+                    }
+
+                    output.Append(Environment.NewLine).Append(innermostException.Message);
+                    exception = ex;
                     testResult = TestResult.Failed;
                 }
             }
@@ -178,7 +187,7 @@ namespace JazSharp.Testing
             _clearTestExecutionContextMethod.Invoke(null, new object[0]);
             Jaz.CurrentTestSemaphore.Release();
 
-            var result = new TestResultInfo(test, testResult, output.ToString().Trim(), stopwatch.Elapsed);
+            var result = new TestResultInfo(test, testResult, output.ToString().Trim(), exception, stopwatch.Elapsed);
 
             try
             {
