@@ -6,22 +6,25 @@ using System.Reflection;
 
 namespace JazSharp.Spies
 {
-    public class Spy
+    public class Spy : ISpy
     {
         private static readonly List<Spy> _spies = new List<Spy>();
 
-        internal object Key { get; }
         internal MethodInfo Method { get; }
+        internal object Key { get; }
         internal List<object[]> CallLog { get; } = new List<object[]>();
         internal Queue<SpyBehaviourBase> Behaviours { get; } = new Queue<SpyBehaviourBase>();
 
         public SpyAnd And => new SpyAnd(this);
-        public SpyThen Then => new SpyThen(this);
+
+        Spy ISpy.Spy => this;
 
         private Spy(MethodInfo method, object key)
         {
-            Method = method.GetBaseDefinition();
+            Method = method;
             Key = key;
+
+            // setup up spy to only return a default value forever
             var defaultBehaviour = new DefaultBehaviour();
             defaultBehaviour.UpdateLifetime(int.MaxValue);
             Behaviours.Enqueue(defaultBehaviour);
@@ -29,6 +32,8 @@ namespace JazSharp.Spies
 
         internal static Spy Create(MethodInfo method, object key)
         {
+            method = GetRootDefinition(method);
+
             Get(method, key)?.Dispose();
 
             var spy = new Spy(method, key);
@@ -38,8 +43,7 @@ namespace JazSharp.Spies
 
         internal static Spy Get(MethodInfo method, object key)
         {
-            method = method.GetBaseDefinition();
-            method = method.IsGenericMethod ? method.GetGenericMethodDefinition() : method;
+            method = GetRootDefinition(method);
             return _spies.FirstOrDefault(x => x.Method == method && x.Key == key);
         }
 
@@ -51,6 +55,13 @@ namespace JazSharp.Spies
         internal static void ClearAll()
         {
             _spies.Clear();
+        }
+
+        private static MethodInfo GetRootDefinition(MethodInfo method)
+        {
+            method = method.IsGenericMethod ? method.GetGenericMethodDefinition() : method;
+            method = method.GetBaseDefinition();
+            return method;
         }
     }
 }

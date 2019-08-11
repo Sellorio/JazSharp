@@ -23,19 +23,6 @@ namespace JazSharp.Reflection
             typeof(Jaz).Assembly.GetName().Name
         };
 
-        private static readonly string[] BuiltInValueTypes =
-        {
-            typeof(void).ToString(),
-            typeof(bool).ToString(),
-            typeof(byte).ToString(),
-            typeof(short).ToString(),
-            typeof(int).ToString(),
-            typeof(long).ToString(),
-            typeof(float).ToString(),
-            typeof(double).ToString(),
-            typeof(decimal).ToString()
-        };
-
         internal static void RewriteAssembly(string filename)
         {
             using (var assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true, ReadSymbols = true }))

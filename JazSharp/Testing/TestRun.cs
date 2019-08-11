@@ -1,5 +1,4 @@
 ﻿using JazSharp.Reflection;
-using JazSharp.Testing.ExecutionContext;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -50,11 +49,13 @@ namespace JazSharp.Testing
             Tests = ImmutableArray.CreateRange(tests);
 
             var jazAssembly = _assemblyContext.LoadedAssemblies[typeof(Jaz).Assembly.GetName().Name];
-            var jaz = jazAssembly.GetType(typeof(Jaz).Namespace + "." + typeof(Jaz).Name);
+            var jaz = jazAssembly.GetType(typeof(Jaz).FullName);
+
             _setupTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.SetupTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
             _clearTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.ClearTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
+
             jazAssembly
-                .GetType(typeof(AssemblyContext).Namespace + "." + typeof(AssemblyContext).Name)
+                .GetType(typeof(AssemblyContext).FullName)
                 .GetMethod(nameof(AssemblyContext.SetupCurrent), BindingFlags.Static | BindingFlags.NonPublic)
                 .Invoke(null, new object[] { _assemblyContext.DllSearchPaths, _assemblyContext.LoadedAssemblies });
         }
@@ -106,7 +107,7 @@ namespace JazSharp.Testing
 
                 foreach (var test in Tests)
                 {
-                    var result = await TestExecutionAsync(test, test.Execution);
+                    var result = await TestExecutionAsync(test, Tests.Any(x => x.IsFocused));
                     results.Add(result);
 
                     if (_cancellationTokenSource.Token.IsCancellationRequested)
@@ -121,7 +122,7 @@ namespace JazSharp.Testing
             });
         }
 
-        private async Task<TestResultInfo> TestExecutionAsync(Test test, TestExecution execution)
+        private async Task<TestResultInfo> TestExecutionAsync(Test test, bool onlyFocused)
         {
             if (_cancellationTokenSource.Token.IsCancellationRequested)
             {
@@ -135,30 +136,43 @@ namespace JazSharp.Testing
             await Jaz.CurrentTestSemaphore.WaitAsync();
             _setupTestExecutionContextMethod.Invoke(null, new object[] { test.FullName, output });
 
-            try
+            if (test.IsExcluded)
             {
-                stopwatch.Start();
-
-                foreach (var method in execution.GetDelegates())
-                {
-                    if (method is Action action)
-                    {
-                        action.Invoke();
-                    }
-                    else
-                    {
-                        await ((Func<Task>)method).Invoke();
-                    }
-                }
-
-                stopwatch.Stop();
-                output.Append("\r\nTest completed successfully.");
-                testResult = TestResult.Passed;
+                testResult = TestResult.Skipped;
+                output.Append("Test skipped due to having been defined with xDescribe or xIt.");
             }
-            catch (Exception ex)
+            else if (onlyFocused && !test.IsFocused)
             {
-                output.Append("\r\n").Append(ex.ToString());
-                testResult = TestResult.Failed;
+                testResult = TestResult.Skipped;
+                output.Append("Test skipped due to other tests being defined with fDescribe or fIt.");
+            }
+            else
+            {
+                try
+                {
+                    stopwatch.Start();
+
+                    foreach (var method in test.Execution.GetDelegates())
+                    {
+                        if (method is Action action)
+                        {
+                            action.Invoke();
+                        }
+                        else
+                        {
+                            await ((Func<Task>)method).Invoke();
+                        }
+                    }
+
+                    stopwatch.Stop();
+                    output.Append("\r\nTest completed successfully.");
+                    testResult = TestResult.Passed;
+                }
+                catch (Exception ex)
+                {
+                    output.Append("\r\n").Append(ex.ToString());
+                    testResult = TestResult.Failed;
+                }
             }
 
             _clearTestExecutionContextMethod.Invoke(null, new object[0]);

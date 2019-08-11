@@ -4,9 +4,11 @@ using System.Linq;
 
 namespace JazSharp.Spies
 {
-    public class SpyThen
+    public class SpyThen : ISpy
     {
         private readonly Spy _spy;
+
+        Spy ISpy.Spy => _spy;
 
         internal SpyThen(Spy spy)
         {

@@ -3,9 +3,11 @@ using System;
 
 namespace JazSharp.Spies
 {
-    public class SpyAnd
+    public class SpyAnd : ISpy
     {
         private readonly Spy _spy;
+
+        Spy ISpy.Spy => _spy;
 
         internal SpyAnd(Spy spy)
         {
@@ -57,7 +59,7 @@ namespace JazSharp.Spies
         public Spy ReturnValues(params object[] values)
         {
             _spy.Behaviours.Clear();
-            _spy.Then.ReturnValues(values);
+            new SpyThen(_spy).ReturnValues(values);
 
             return _spy;
         }

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using JazSharp.Testing.ExecutionContext;
+using JazSharp.Testing;
 using System.Threading;
 using System.Text;
 
@@ -134,21 +134,6 @@ namespace JazSharp
         public static AnyMatcher InstanceOf<T>()
         {
             return new AnyMatcher(typeof(T), true);
-        }
-
-        public static object Invoke(Expression<Action> method)
-        {
-            if (method.Body is MethodCallExpression methodCall)
-            {
-                return InvokationHelper.InvokeMethodWithSpySupport(
-                    methodCall.Method,
-                    ExpressionHelper.GetValueFromExpression(methodCall.Object),
-                    methodCall.Arguments.Select(ExpressionHelper.GetValueFromExpression).ToArray());
-            }
-            else
-            {
-                throw new ArgumentException("Method must only contain a method call.");
-            }
         }
     }
 }
