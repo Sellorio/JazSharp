@@ -126,35 +126,35 @@ namespace JazSharp.Tests
                 }
             }
 
-            public TValue Add5<TValue>(TValue value)
+            public TVA Add5<TVA>(TVA value)
             {
-                if (typeof(TValue) == typeof(int))
+                if (typeof(TVA) == typeof(int))
                 {
-                    return (TValue)(object)((int)(object)value + 5);
+                    return (TVA)(object)((int)(object)value + 5);
                 }
 
                 return default;
             }
 
-            public TValue CallFunc<TValue>(Func<TValue> func)
+            public TVB CallFunc<TVB>(Func<TVB> func)
             {
                 return func.Invoke();
             }
 
-            public TValue CallFunc2<TValue>(Func<TValue> func)
+            public TVC CallFunc2<TVC>(Func<TVC> func)
             {
-                return (TValue)new TestSubject<Func<TValue>>().CallFunc2(func);
+                return (TVC)new TestSubject<Func<TVC>>().CallFunc2(func);
             }
         }
 
-        private class TestSubject<TValue>
+        private class TestSubject<TVD>
         {
-            public TValue CallFunc(Func<TValue> func)
+            public TVD CallFunc(Func<TVD> func)
             {
                 return func.Invoke();
             }
 
-            public object CallFunc2(TValue func)
+            public object CallFunc2(TVD func)
             {
                 return ((Delegate)(object)func).Method.Invoke(((Delegate)(object)func).Target, new object[0]);
             }
