@@ -491,6 +491,150 @@ namespace JazSharp.Tests.Expectations
                         });
                     });
                 });
+
+                Describe(nameof(ValueExpect<object>.ToBeGreaterThan), () =>
+                {
+                    It("should fail if value is less than the given value.", () =>
+                    {
+                        Expect(() => Expect(3).ToBeGreaterThan(5)).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if value is equal to the given value.", () =>
+                    {
+                        Expect(() => Expect(5).ToBeGreaterThan(5)).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should pass if value is greater than the given value.", () =>
+                    {
+                        Expect(7).ToBeGreaterThan(5);
+                    });
+
+                    Describe("with Not", () =>
+                    {
+                        It("should pass if value is less than the given value.", () =>
+                        {
+                            Expect(3).Not.ToBeGreaterThan(5);
+                        });
+
+                        It("should pass if value is equal to the given value.", () =>
+                        {
+                            Expect(5).Not.ToBeGreaterThan(5);
+                        });
+
+                        It("should fail if value is greater than the given value.", () =>
+                        {
+                            Expect(() => Expect(7).Not.ToBeGreaterThan(5)).ToThrow<JazExpectationException>();
+                        });
+                    });
+                });
+
+                Describe(nameof(ValueExpect<object>.ToBeLessThan), () =>
+                {
+                    It("should fail if value is less than the given value.", () =>
+                    {
+                        Expect(() => Expect(7).ToBeLessThan(5)).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if value is equal to the given value.", () =>
+                    {
+                        Expect(() => Expect(5).ToBeLessThan(5)).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should pass if value is greater than the given value.", () =>
+                    {
+                        Expect(3).ToBeLessThan(5);
+                    });
+
+                    Describe("with Not", () =>
+                    {
+                        It("should pass if value is greater than the given value.", () =>
+                        {
+                            Expect(7).Not.ToBeLessThan(5);
+                        });
+
+                        It("should pass if value is equal to the given value.", () =>
+                        {
+                            Expect(5).Not.ToBeLessThan(5);
+                        });
+
+                        It("should fail if value is less than the given value.", () =>
+                        {
+                            Expect(() => Expect(3).Not.ToBeLessThan(5)).ToThrow<JazExpectationException>();
+                        });
+                    });
+                });
+
+                Describe(nameof(ValueExpect<object>.ToBeGreaterThanOrEqualTo), () =>
+                {
+                    It("should fail if value is less than the given value.", () =>
+                    {
+                        Expect(() => Expect(3).ToBeGreaterThanOrEqualTo(5)).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should pass if value is equal to the given value.", () =>
+                    {
+                        Expect(5).ToBeGreaterThanOrEqualTo(5);
+                    });
+
+                    It("should pass if value is greater than the given value.", () =>
+                    {
+                        Expect(7).ToBeGreaterThanOrEqualTo(5);
+                    });
+
+                    Describe("with Not", () =>
+                    {
+                        It("should pass if value is less than the given value.", () =>
+                        {
+                            Expect(3).Not.ToBeGreaterThanOrEqualTo(5);
+                        });
+
+                        It("should fail if value is equal to the given value.", () =>
+                        {
+                            Expect(() => Expect(5).Not.ToBeGreaterThanOrEqualTo(5)).ToThrow<JazExpectationException>();
+                        });
+
+                        It("should fail if value is greater than the given value.", () =>
+                        {
+                            Expect(() => Expect(7).Not.ToBeGreaterThanOrEqualTo(5)).ToThrow<JazExpectationException>();
+                        });
+                    });
+                });
+
+                Describe(nameof(ValueExpect<object>.ToBeLessThanOrEqualTo), () =>
+                {
+                    It("should fail if value is less than the given value.", () =>
+                    {
+                        Expect(() => Expect(7).ToBeLessThanOrEqualTo(5)).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should pass if value is equal to the given value.", () =>
+                    {
+                        Expect(5).ToBeLessThanOrEqualTo(5);
+                    });
+
+                    It("should pass if value is greater than the given value.", () =>
+                    {
+                        Expect(3).ToBeLessThanOrEqualTo(5);
+                    });
+
+                    Describe("with Not", () =>
+                    {
+                        It("should pass if value is greater than the given value.", () =>
+                        {
+                            Expect(7).Not.ToBeLessThanOrEqualTo(5);
+                        });
+
+                        It("should fail if value is equal to the given value.", () =>
+                        {
+                            Expect(() => Expect(5).Not.ToBeLessThanOrEqualTo(5)).ToThrow<JazExpectationException>();
+                        });
+
+                        It("should fail if value is less than the given value.", () =>
+                        {
+                            Expect(() => Expect(3).Not.ToBeLessThanOrEqualTo(5)).ToThrow<JazExpectationException>();
+                        });
+                    });
+                });
             });
         }
     }

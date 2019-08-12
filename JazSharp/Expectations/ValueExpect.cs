@@ -148,6 +148,90 @@ namespace JazSharp.Expectations
                 $"Expected value {SafeToString(_value)} to be outside the range of {SafeToString(start)} to {SafeToString(end)}.");
         }
 
+        /// <summary>
+        /// Tests that the value is less than the given other value.
+        /// </summary>
+        /// <typeparam name="TCompare">The type of the other value.</typeparam>
+        /// <param name="other">The other value that should be less than the value being tested.</param>
+        public void ToBeLessThan<TCompare>(TCompare other)
+            where TCompare : IComparable<TValue>
+        {
+            if (other == null)
+            {
+                throw new ArgumentNullException(nameof(other));
+            }
+
+            var conditionMet = other.CompareTo(_value) == 1;
+
+            ThrowIfFailed(
+                conditionMet,
+                $"Expected value {SafeToString(_value)} to be less than {SafeToString(other)}.",
+                $"Expected value {SafeToString(_value)} to not be less than {SafeToString(other)}.");
+        }
+
+        /// <summary>
+        /// Tests that the value is less than or equal to the given other value.
+        /// </summary>
+        /// <typeparam name="TCompare">The type of the other value.</typeparam>
+        /// <param name="other">The other value that should be less than the value being tested.</param>
+        public void ToBeLessThanOrEqualTo<TCompare>(TCompare other)
+            where TCompare : IComparable<TValue>
+        {
+            if (other == null)
+            {
+                throw new ArgumentNullException(nameof(other));
+            }
+
+            var conditionMet = other.CompareTo(_value) != -1;
+
+            ThrowIfFailed(
+                conditionMet,
+                $"Expected value {SafeToString(_value)} to be less than or equal to {SafeToString(other)}.",
+                $"Expected value {SafeToString(_value)} to not be less than nor equal to {SafeToString(other)}.");
+        }
+
+        /// <summary>
+        /// Tests that the value is greater than the given other value.
+        /// </summary>
+        /// <typeparam name="TCompare">The type of the other value.</typeparam>
+        /// <param name="other">The other value that should be less than the value being tested.</param>
+        public void ToBeGreaterThan<TCompare>(TCompare other)
+            where TCompare : IComparable<TValue>
+        {
+            if (other == null)
+            {
+                throw new ArgumentNullException(nameof(other));
+            }
+
+            var conditionMet = other.CompareTo(_value) == -1;
+
+            ThrowIfFailed(
+                conditionMet,
+                $"Expected value {SafeToString(_value)} to be greater than {SafeToString(other)}.",
+                $"Expected value {SafeToString(_value)} to not be greater than {SafeToString(other)}.");
+        }
+
+        /// <summary>
+        /// Tests that the value is greater than the given other value.
+        /// </summary>
+        /// <typeparam name="TCompare">The type of the other value.</typeparam>
+        /// <param name="other">The other value that should be less than the value being tested.</param>
+        public void ToBeGreaterThanOrEqualTo<TCompare>(TCompare other)
+            where TCompare : IComparable<TValue>
+        {
+            if (other == null)
+            {
+                throw new ArgumentNullException(nameof(other));
+            }
+
+            var conditionMet = other.CompareTo(_value) != 1;
+
+            ThrowIfFailed(
+                conditionMet,
+                $"Expected value {SafeToString(_value)} to be greater than or equal to {SafeToString(other)}.",
+                $"Expected value {SafeToString(_value)} to not be greater than nor equal to {SafeToString(other)}.");
+        }
+
         private void ThrowIfFailed(bool conditionMet, string conditionNotMetFailure, string conditionMetFailure)
         {
             if (!conditionMet && !_inverted)
