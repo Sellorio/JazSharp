@@ -38,7 +38,7 @@ namespace JazSharp.Testing
         /// The path to the test. Each element in the path is comprised of the value passed into a call to
         /// <see cref="Spec.Describe(string, Action)"/> and similar methods.
         /// </summary>
-        public ImmutableArray<string> Path { get; }
+        public IReadOnlyList<string> Path { get; }
         
         /// <summary>
         /// The description of the test. This is the value passed in to <see cref="Spec.It(string, Action, string, int)"/> and

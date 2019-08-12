@@ -19,12 +19,12 @@ namespace JazSharp.Testing
         /// <summary>
         /// The test sources (assembly file names).
         /// </summary>
-        public ImmutableArray<string> Sources { get; }
+        public IReadOnlyList<string> Sources { get; }
 
         /// <summary>
         /// The tests that were discovered.
         /// </summary>
-        public ImmutableArray<Test> Tests { get; private set; }
+        public IReadOnlyList<Test> Tests { get; private set; }
 
         private TestCollection(IEnumerable<string> sources, AssemblyContext assemblyContext, IEnumerable<Test> tests)
         {

@@ -28,7 +28,7 @@ namespace JazSharp.Testing
         /// <summary>
         /// The tests planned for execution.
         /// </summary>
-        public ImmutableArray<Test> Tests { get; }
+        public IReadOnlyList<Test> Tests { get; }
 
         /// <summary>
         /// An event that is triggered when one of the tests has completed. This will

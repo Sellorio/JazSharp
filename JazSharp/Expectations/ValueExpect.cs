@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections;
+using System.Linq;
 
 namespace JazSharp.Expectations
 {
@@ -66,6 +65,23 @@ namespace JazSharp.Expectations
                 conditionMet,
                 $"Expected value {SafeToString(_value)} to be default ({SafeToString(default(TValue))}).",
                 $"Expected value to not be default ({SafeToString(default(TValue))}).");
+        }
+
+        public void ToBeEmpty()
+        {
+            if (_value is IEnumerable enumerable)
+            {
+                var conditionMet = !enumerable.Cast<object>().Any();
+
+                ThrowIfFailed(
+                    conditionMet,
+                    $"Expected value {SafeToString(_value)} to be empty.",
+                    $"Expected value to not to be empty.");
+            }
+            else
+            {
+                throw new JazExpectationException("Expected an enumerable value for ToBeEmpty.");
+            }
         }
 
         private void ThrowIfFailed(bool conditionMet, string conditionNotMetFailure, string conditionMetFailure)

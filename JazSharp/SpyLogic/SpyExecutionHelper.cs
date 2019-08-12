@@ -1,5 +1,6 @@
 ﻿using JazSharp.Spies;
 using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
@@ -37,7 +38,7 @@ namespace JazSharp.SpyLogic
                 return method.Invoke(instance, parameters);
             }
 
-            spy.CallLog.Add(parameters);
+            spy.CallLog.Add(ImmutableArray.CreateRange(parameters));
 
             if (!spy.Behaviours.Any())
             {
