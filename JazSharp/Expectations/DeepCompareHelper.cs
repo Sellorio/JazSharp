@@ -23,12 +23,12 @@ namespace JazSharp.Expectations
         {
             if (left == null)
             {
-                return right == null;
+                return right == null || right is AnyMatcher anyMatcher && anyMatcher.AllowNull;
             }
 
             if (right == null)
             {
-                return false;
+                return left is AnyMatcher anyMatcher && anyMatcher.AllowNull;
             }
 
             var leftType = left.GetType();

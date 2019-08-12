@@ -126,14 +126,30 @@ namespace JazSharp
             return new PropertySpy(propertyInfo, string.Empty);
         }
 
-        public static AnyMatcher Any<T>()
+        public static object Any<T>()
         {
-            return new AnyMatcher(typeof(T), false);
+            return new AnyMatcher(typeof(T), false, false);
         }
 
-        public static AnyMatcher InstanceOf<T>()
+        public static object AnyOrNull<T>()
+            where T : class
         {
-            return new AnyMatcher(typeof(T), true);
+            return new AnyMatcher(typeof(T), false, true);
+        }
+
+        public static object Any()
+        {
+            return new AnyMatcher(typeof(object), false, false);
+        }
+
+        public static object AnyOrNull()
+        {
+            return new AnyMatcher(typeof(object), false, true);
+        }
+
+        public static object InstanceOf<T>()
+        {
+            return new AnyMatcher(typeof(T), true, false);
         }
     }
 }

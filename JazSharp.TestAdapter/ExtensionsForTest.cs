@@ -12,7 +12,7 @@ namespace JazSharp.TestAdapter
 
         public static TestCase ToTestCase(this Test test)
         {
-            return new TestCase(test.TestClass.FullName + "." + test.FullName, TestAdapterConstants.ExecutorUri, test.Execution.Main.Method.Module.Assembly.Location)
+            return new TestCase(test.TestClass.FullName + "." + test.FullName.Replace(".", "_"), TestAdapterConstants.ExecutorUri, test.Execution.Main.Method.Module.Assembly.Location)
             {
                 Id = GuidFromString(test.FullName + ":" + test.SourceFilename + ":" + test.LineNumber),
                 CodeFilePath = test.SourceFilename,

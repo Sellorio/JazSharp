@@ -2,31 +2,59 @@
 
 namespace JazSharp.Expectations
 {
+    /// <summary>
+    /// An object used to specify expectations against a method call.
+    /// </summary>
     public class CallExpect
     {
         private readonly Exception _exception;
+        private readonly bool _inverted;
 
         internal CallExpect(Exception exception)
         {
             _exception = exception;
         }
 
+        /// <summary>
+        /// Inverts the expectation such that if it would otherwise have passed, it will now fail.
+        /// The message provided in the <see cref="JazExpectationException"/> will also be different
+        /// to reflect the inverted nature of the check.
+        /// </summary>
+        public CallExpect Not => new CallExpect(!_inverted);
+
+        internal CallExpect(bool inverted)
+        {
+            _inverted = inverted;
+        }
+
         public TException ToThrow<TException>()
             where TException : Exception
         {
-            if (_exception == null)
+            if (_inverted)
             {
-                throw new JazExpectationException($"Expected a {typeof(TException).Name} to be thrown but it wasn't.");
+                if (_exception != null && _exception.GetType() == typeof(TException))
+                {
+                    throw new JazExpectationException($"Unexpected exception of type {typeof(TException).Name} was thrown.");
+                }
+
+                return null;
             }
-
-            var actualExceptionType = _exception.GetType();
-
-            if (_exception.GetType() != typeof(TException))
+            else
             {
-                throw new JazExpectationException($"Expected an exception of type {typeof(TException).Name} but encountered a {actualExceptionType.Name} instead.");
-            }
+                if (_exception == null)
+                {
+                    throw new JazExpectationException($"Expected a {typeof(TException).Name} to be thrown but it wasn't.");
+                }
 
-            return (TException)_exception;
+                var actualExceptionType = _exception.GetType();
+
+                if (_exception.GetType() != typeof(TException))
+                {
+                    throw new JazExpectationException($"Expected an exception of type {typeof(TException).Name} but encountered a {actualExceptionType.Name} instead.");
+                }
+
+                return (TException)_exception;
+            }
         }
     }
 }

@@ -4,11 +4,19 @@ using System.Linq;
 
 namespace JazSharp.Expectations
 {
+    /// <summary>
+    /// An object used to specify expectations against a spy.
+    /// </summary>
     public class SpyExpect
     {
         private readonly Spy _spy;
         private readonly bool _inverted;
 
+        /// <summary>
+        /// Inverts the expectation such that if it would otherwise have passed, it will now fail.
+        /// The message provided in the <see cref="JazExpectationException"/> will also be different
+        /// to reflect the inverted nature of the check.
+        /// </summary>
         public SpyExpect Not => new SpyExpect(_spy, !_inverted);
 
         private SpyExpect(Spy spy, bool inverted)
@@ -22,6 +30,9 @@ namespace JazSharp.Expectations
             _spy = spy;
         }
 
+        /// <summary>
+        /// Tests that the method being spied on was called at least once.
+        /// </summary>
         public void ToHaveBeenCalled()
         {
             var wasCalled = _spy.CallLog.Count > 0;
@@ -37,6 +48,10 @@ namespace JazSharp.Expectations
             }
         }
 
+        /// <summary>
+        /// Tests that the method being spied on was called a specific number of times.
+        /// </summary>
+        /// <param name="count">The expected call count.</param>
         public void ToHaveBeenCalledTimes(int count)
         {
             var expectedCallCount = _spy.CallLog.Count == count;
@@ -52,6 +67,11 @@ namespace JazSharp.Expectations
             }
         }
 
+        /// <summary>
+        /// Tests that the method being spied on was called at least once with the given set of parameters.
+        /// Parameters are compared using deep equality checks, not reference checks.
+        /// </summary>
+        /// <param name="parameters">The expected parameters.</param>
         public void ToHaveBeenCalledWith(params object[] parameters)
         {
             if (parameters.Length != _spy.Method.GetParameters().Length)
