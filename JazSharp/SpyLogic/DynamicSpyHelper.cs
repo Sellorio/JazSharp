@@ -12,7 +12,7 @@ namespace JazSharp.SpyLogic
 
             result = () =>
             {
-                SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[0]);
+                SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[0]);
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -25,7 +25,7 @@ namespace JazSharp.SpyLogic
 
             result = p1 =>
             {
-                SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1 });
+                SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -38,7 +38,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2) =>
             {
-                SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2 });
+                SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -51,7 +51,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2, p3) =>
             {
-                SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3 });
+                SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -64,7 +64,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2, p3, p4) =>
             {
-                SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4 });
+                SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -77,7 +77,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2, p3, p4, p5) =>
             {
-                SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4, p5 });
+                SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4, p5 });
             };
             
             return MakeSpy(result, out newSpy, out spy);
@@ -90,7 +90,7 @@ namespace JazSharp.SpyLogic
 
             result = () =>
             {
-                return (TResult)SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[0]);
+                return (TResult)SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[0]);
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -103,7 +103,7 @@ namespace JazSharp.SpyLogic
 
             result = p1 =>
             {
-                return (TResult)SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1 });
+                return (TResult)SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -116,7 +116,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2) =>
             {
-                return (TResult)SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2 });
+                return (TResult)SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -129,7 +129,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2, p3) =>
             {
-                return (TResult)SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3 });
+                return (TResult)SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -142,7 +142,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2, p3, p4) =>
             {
-                return (TResult)SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4 });
+                return (TResult)SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4 });
             };
 
             return MakeSpy(result, out newSpy, out spy);
@@ -155,7 +155,7 @@ namespace JazSharp.SpyLogic
 
             result = (p1, p2, p3, p4, p5) =>
             {
-                return (TResult)SpyExecutionHelper.HandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4, p5 });
+                return (TResult)SpyExecutionHelper.InnerHandleCall(newSpy, result.Method, result.Target, new object[] { p1, p2, p3, p4, p5 });
             };
 
             return MakeSpy(result, out newSpy, out spy);

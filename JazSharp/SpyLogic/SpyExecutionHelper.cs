@@ -34,10 +34,10 @@ namespace JazSharp.SpyLogic
             var key = method.IsStatic ? string.Empty : instance;
             var spy = Spy.Get(method, key);
 
-            return HandleCall(spy, method, instance, parameters);
+            return InnerHandleCall(spy, method, instance, parameters);
         }
 
-        internal static object HandleCall(Spy spy, MethodInfo method, object instance, object[] parameters)
+        internal static object InnerHandleCall(Spy spy, MethodInfo method, object instance, object[] parameters)
         {
             if (spy == null)
             {
