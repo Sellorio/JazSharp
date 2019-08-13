@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
 
 namespace JazSharp.Reflection
@@ -22,6 +23,15 @@ namespace JazSharp.Reflection
         private static readonly MethodInfo HandleCallMethod =
             typeof(SpyExecutionHelper)
                 .GetMethod(nameof(SpyExecutionHelper.HandleCall), BindingFlags.NonPublic | BindingFlags.Static);
+
+        private static readonly MethodInfo InnerExceptionGetter =
+            typeof(Exception).GetProperty(nameof(Exception.InnerException)).GetMethod;
+
+        private static readonly MethodInfo ExceptionServicesCapture =
+            typeof(ExceptionDispatchInfo).GetMethod(nameof(ExceptionDispatchInfo.Capture), BindingFlags.Public | BindingFlags.Static);
+
+        private static readonly MethodInfo ExceptionServicesThrow =
+            typeof(ExceptionDispatchInfo).GetMethod(nameof(ExceptionDispatchInfo.Throw), new Type[0]);
 
         private static readonly string[] DoNotWrapAssemblies =
         {
@@ -168,6 +178,9 @@ namespace JazSharp.Reflection
                 var spyExecutionHelperType = method.Module.ImportReference(typeof(SpyExecutionHelper));
                 var objectType = method.Module.ImportReference(typeof(object));
                 var objectArrayType = new ArrayType(objectType);
+                var innerExceptionGetter = method.Module.ImportReference(InnerExceptionGetter);
+                var exceptionServicesCapture = method.Module.ImportReference(ExceptionServicesCapture);
+                var exceptionServicesThrow = method.Module.ImportReference(ExceptionServicesThrow);
 
                 wrapperMethodDefinition =
                     new MethodDefinition(
@@ -193,6 +206,7 @@ namespace JazSharp.Reflection
                 wrapperMethodDefinition.Parameters.Add(new ParameterDefinition(methodBaseType));
 
                 wrapperMethodDefinition.Body.Variables.Add(new VariableDefinition(objectArrayType));
+                wrapperMethodDefinition.Body.Variables.Add(new VariableDefinition(method.Module.ImportReference(typeof(Exception))));
 
                 if (isFunc)
                 {
@@ -251,6 +265,9 @@ namespace JazSharp.Reflection
 
                 ilProcessor.Emit(OpCodes.Stloc_0);
 
+                var tryStart = Instruction.Create(OpCodes.Nop);
+                ilProcessor.Append(tryStart);
+
                 // get method info for SpyExecutionHelper.HandleCall to circumvent access checks
                 ilProcessor.Emit(OpCodes.Ldtoken, handleCallMethod);
                 ilProcessor.Emit(OpCodes.Ldtoken, handleCallMethod.DeclaringType);
@@ -271,20 +288,37 @@ namespace JazSharp.Reflection
                 ilProcessor.Emit(OpCodes.Ldarg, wrapperMethodDefinition.Parameters.Count - 1);
                 ilProcessor.Emit(OpCodes.Stelem_Ref);
                 // invoke HandleCall
-                ilProcessor.Emit(OpCodes.Call, methodInvokeMethod);
-                ilProcessor.Emit(OpCodes.Pop);
+                var invokeInstruction = Instruction.Create(OpCodes.Call, methodInvokeMethod);
+                ilProcessor.Append(invokeInstruction);
+
+                Instruction leaveAfterThisInstruction;
 
                 if (isFunc)
                 {
-                    //ilProcessor.Emit(OpCodes.Unbox_Any, wrapperMethodDefinition.ReturnType);
-                    //ilProcessor.Emit(OpCodes.Stloc_1);
-                    ilProcessor.Emit(OpCodes.Ldloca, wrapperMethodDefinition.Body.Variables[1]);
-                    ilProcessor.Emit(OpCodes.Initobj, wrapperMethodDefinition.ReturnType);
+                    ilProcessor.Emit(OpCodes.Unbox_Any, wrapperMethodDefinition.ReturnType);
+                    var stLoc = Instruction.Create(OpCodes.Stloc_2);
+                    ilProcessor.Append(stLoc);
+                    leaveAfterThisInstruction = stLoc;
+                    //ilProcessor.Emit(OpCodes.Ldloca, wrapperMethodDefinition.Body.Variables[1]);
+                    //ilProcessor.Emit(OpCodes.Initobj, wrapperMethodDefinition.ReturnType);
                 }
                 else
                 {
-                    //ilProcessor.Emit(OpCodes.Pop);
+                    var pop = Instruction.Create(OpCodes.Pop);
+                    ilProcessor.Append(pop);
+                    leaveAfterThisInstruction = pop;
                 }
+
+                var catchStart = Instruction.Create(OpCodes.Stloc_1);
+                ilProcessor.Append(catchStart);
+                ilProcessor.Emit(OpCodes.Ldloc_1);
+                ilProcessor.Emit(OpCodes.Callvirt, innerExceptionGetter);
+                ilProcessor.Emit(OpCodes.Call, exceptionServicesCapture);
+                ilProcessor.Emit(OpCodes.Callvirt, exceptionServicesThrow);
+                var rethrow = Instruction.Create(OpCodes.Rethrow);
+                ilProcessor.Append(rethrow);
+
+                Instruction postCatchInstruction = null;
 
                 for (var i = 0; i < wrapperMethodDefinition.Parameters.Count - 1; i++)
                 {
@@ -294,7 +328,14 @@ namespace JazSharp.Reflection
                     {
                         var actualParameterType = ResolveIfByRefType(parameter.ParameterType);
 
-                        ilProcessor.Emit(OpCodes.Ldarg, i);
+                        var loadParameterInstruction = Instruction.Create(OpCodes.Ldarg, wrapperMethodDefinition.Parameters[i]);
+
+                        if (postCatchInstruction == null)
+                        {
+                            postCatchInstruction = loadParameterInstruction;
+                        }
+
+                        ilProcessor.Append(loadParameterInstruction);
                         ilProcessor.Emit(OpCodes.Ldloc_0);
                         ilProcessor.Emit(OpCodes.Ldc_I4, i);
                         ilProcessor.Emit(OpCodes.Ldelem_Ref);
@@ -305,19 +346,37 @@ namespace JazSharp.Reflection
 
                 if (isFunc)
                 {
-                    ilProcessor.Emit(OpCodes.Ldloc_1);
+                    var loadReturnVariableInstruction = Instruction.Create(OpCodes.Ldloc_2);
+
+                    if (postCatchInstruction == null)
+                    {
+                        postCatchInstruction = loadReturnVariableInstruction;
+                    }
+
+                    ilProcessor.Append(loadReturnVariableInstruction);
                 }
 
-                //if (isFunc)
-                //{
-                //    ilProcessor.Emit(OpCodes.Ldloca, wrapperMethodDefinition.Body.Variables[1]);
-                //    ilProcessor.Emit(OpCodes.Initobj, wrapperMethodDefinition.ReturnType);
-                //    ilProcessor.Emit(OpCodes.Ldloc_1);
-                //}
+                var returnInstruction = Instruction.Create(OpCodes.Ret);
 
-                ilProcessor.Emit(OpCodes.Ret);
+                if (postCatchInstruction == null)
+                {
+                    postCatchInstruction = returnInstruction;
+                }
 
-                //wrapperMethodDefinition.Body.OptimizeMacros();
+                ilProcessor.Append(returnInstruction);
+
+                ilProcessor.InsertAfter(leaveAfterThisInstruction, Instruction.Create(OpCodes.Leave, postCatchInstruction));
+
+                wrapperMethodDefinition.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
+                {
+                    CatchType = method.Module.ImportReference(typeof(TargetInvocationException)),
+                    TryStart = tryStart,
+                    TryEnd = catchStart,
+                    HandlerStart = catchStart,
+                    HandlerEnd = rethrow.Next
+                });
+
+                wrapperMethodDefinition.Body.OptimizeMacros();
 
                 method.DeclaringType.Methods.Add(wrapperMethodDefinition);
                 byRefWrappers.Add(resolvedCalledMethod, wrapperMethodDefinition);

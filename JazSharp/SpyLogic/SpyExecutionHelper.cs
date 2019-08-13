@@ -19,11 +19,12 @@ namespace JazSharp.SpyLogic
             }
 
             object instance = null;
+            object[] parametersWithoutThis = parameters;
 
             if (!method.IsStatic)
             {
                 instance = parameters[0];
-                parameters = parameters.Skip(1).ToArray();
+                parametersWithoutThis = parameters.Skip(1).ToArray();
 
                 if (instance == null)
                 {
@@ -34,7 +35,18 @@ namespace JazSharp.SpyLogic
             var key = method.IsStatic ? string.Empty : instance;
             var spy = Spy.Get(method, key);
 
-            return InnerHandleCall(spy, method, instance, parameters);
+            var result = InnerHandleCall(spy, method, instance, parametersWithoutThis);
+
+            // need to copy paraemters out for ref and out parameters
+            if (!method.IsStatic)
+            {
+                for (var i = 0; i < parametersWithoutThis.Length; i++)
+                {
+                    parameters[i + 1] = parametersWithoutThis[i];
+                }
+            }
+
+            return result;
         }
 
         internal static object InnerHandleCall(Spy spy, MethodInfo method, object instance, object[] parameters)

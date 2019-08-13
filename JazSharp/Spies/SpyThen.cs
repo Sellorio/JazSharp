@@ -1,11 +1,13 @@
 ﻿using JazSharp.SpyLogic.Behaviour;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace JazSharp.Spies
 {
     public class SpyThen : ISpy
     {
+        private readonly Dictionary<int, object> _parameterChanges = new Dictionary<int, object>();
         private readonly Spy _spy;
 
         Spy ISpy.Spy => _spy;
@@ -24,6 +26,7 @@ namespace JazSharp.Spies
 
             ConstrainPreviousBehaviour();
             var behaviour = new CallThroughBehaviour();
+            behaviour.ParameterChangesBeforeExecution = _parameterChanges;
             _spy.Behaviours.Enqueue(behaviour);
             return new SpyWithBehaviour(_spy, behaviour);
         }
@@ -32,6 +35,7 @@ namespace JazSharp.Spies
         {
             ConstrainPreviousBehaviour();
             var behaviour = new ThrowBehaviour(exception);
+            behaviour.ParameterChangesBeforeExecution = _parameterChanges;
             _spy.Behaviours.Enqueue(behaviour);
             return new SpyWithBehaviour(_spy, behaviour);
         }
@@ -41,11 +45,59 @@ namespace JazSharp.Spies
         {
             ConstrainPreviousBehaviour();
             var behaviour = new ThrowBehaviour(typeof(TException));
+            behaviour.ParameterChangesBeforeExecution = _parameterChanges;
             _spy.Behaviours.Enqueue(behaviour);
             return new SpyWithBehaviour(_spy, behaviour);
         }
 
         public SpyWithBehaviour ReturnValue(object value)
+        {
+            var behaviour = AddReturnValue(value);
+            return new SpyWithBehaviour(_spy, behaviour);
+        }
+
+        public SpyWithReturnValues ReturnValues(params object[] values)
+        {
+            var behaviours = new List<SpyBehaviourBase>();
+
+            foreach (var value in values)
+            {
+                var behaviour = AddReturnValue(value);
+                behaviour.UpdateLifetime(1);
+                behaviours.Add(behaviour);
+            }
+
+            return new SpyWithReturnValues(_spy, behaviours);
+        }
+
+        public SpyWithBehaviour DoNothing()
+        {
+            ConstrainPreviousBehaviour();
+            var behaviour = new DefaultBehaviour();
+            behaviour.ParameterChangesBeforeExecution = _parameterChanges;
+            _spy.Behaviours.Enqueue(behaviour);
+            return new SpyWithBehaviour(_spy, behaviour);
+        }
+
+        public SpyThen ChangeParameter(string parameterName, object value)
+        {
+            var parameters = _spy.Method.GetParameters();
+
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var parameter = parameters[i];
+
+                if (parameter.Name == parameterName)
+                {
+                    _parameterChanges.Add(i, value);
+                    return this;
+                }
+            }
+
+            throw new ArgumentException("parameterName does not match a parameter on the method.");
+        }
+
+        private SpyBehaviourBase AddReturnValue(object value)
         {
             ConstrainPreviousBehaviour();
 
@@ -55,18 +107,10 @@ namespace JazSharp.Spies
             }
 
             var behaviour = new ReturnValueBehaviour(value);
+            behaviour.ParameterChangesBeforeExecution = _parameterChanges;
             _spy.Behaviours.Enqueue(behaviour);
-            return new SpyWithBehaviour(_spy, behaviour);
-        }
 
-        public Spy ReturnValues(params object[] values)
-        {
-            foreach (var value in values)
-            {
-                ReturnValue(value).Once();
-            }
-
-            return _spy;
+            return behaviour;
         }
 
         private void ConstrainPreviousBehaviour()

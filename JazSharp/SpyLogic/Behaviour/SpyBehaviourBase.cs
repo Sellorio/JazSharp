@@ -1,5 +1,6 @@
 ﻿using JazSharp.Spies;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace JazSharp.SpyLogic.Behaviour
@@ -8,10 +9,14 @@ namespace JazSharp.SpyLogic.Behaviour
     {
         internal static SpyBehaviourBase Default => new DefaultBehaviour();
 
+        internal Dictionary<int, object> ParameterChangesBeforeExecution { get; set; } = new Dictionary<int, object>();
+        internal Dictionary<int, object> ParameterChangesAfterExecution { get; } = new Dictionary<int, object>();
         internal int Lifetime { get; private set; }
 
         internal object Execute(Spy spy, MethodInfo exactMethod, object instance, object[] parameters)
         {
+            ApplyParameterChanges(parameters, ParameterChangesBeforeExecution);
+
             var args = new BehaviourArgs(spy, exactMethod, instance, parameters);
 
             Execute(args);
@@ -23,6 +28,8 @@ namespace JazSharp.SpyLogic.Behaviour
                 spy.Behaviours.Dequeue();
             }
 
+            ApplyParameterChanges(parameters, ParameterChangesAfterExecution);
+
             return args.HasResult ? args.Result : GetDefaultValue(exactMethod.ReturnType);
         }
 
@@ -32,6 +39,14 @@ namespace JazSharp.SpyLogic.Behaviour
         }
 
         protected abstract void Execute(BehaviourArgs args);
+
+        private static void ApplyParameterChanges(object[] parameters, Dictionary<int, object> parameterChanges)
+        {
+            foreach (var parameterChange in parameterChanges)
+            {
+                parameters[parameterChange.Key] = parameterChange.Value;
+            }
+        }
 
         private static object GetDefaultValue(Type type)
         {
