@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using JazSharp.Testing;
 using System.Threading;
 using System.Text;
+using JazSharp.SpyLogic;
 
 [assembly: InternalsVisibleTo("JazSharp.TestAdapter")]
 
@@ -150,6 +151,66 @@ namespace JazSharp
         public static object InstanceOf<T>()
         {
             return new AnyMatcher(typeof(T), true, false);
+        }
+
+        public static Action CreateSpy(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpy(out spy);
+        }
+
+        public static Action<TParam1> CreateSpy<TParam1>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpy<TParam1>(out spy);
+        }
+
+        public static Action<TParam1, TParam2> CreateSpy<TParam1, TParam2>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpy<TParam1, TParam2>(out spy);
+        }
+
+        public static Action<TParam1, TParam2, TParam3> CreateSpy<TParam1, TParam2, TParam3>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpy<TParam1, TParam2, TParam3>(out spy);
+        }
+
+        public static Action<TParam1, TParam2, TParam3, TParam4> CreateSpy<TParam1, TParam2, TParam3, TParam4>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpy<TParam1, TParam2, TParam3, TParam4>(out spy);
+        }
+
+        public static Action<TParam1, TParam2, TParam3, TParam4, TParam5> CreateSpy<TParam1, TParam2, TParam3, TParam4, TParam5>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpy<TParam1, TParam2, TParam3, TParam4, TParam5>(out spy);
+        }
+
+        public static Func<TResult> CreateSpyFunc<TResult>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpyFunc<TResult>(out spy);
+        }
+
+        public static Func<TParam1, TResult> CreateSpyFunc<TParam1, TResult>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpyFunc<TParam1, TResult>(out spy);
+        }
+
+        public static Func<TParam1, TParam2, TResult> CreateSpyFunc<TParam1, TParam2, TResult>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpyFunc<TParam1, TParam2, TResult>(out spy);
+        }
+
+        public static Func<TParam1, TParam2, TParam3, TResult> CreateSpyFunc<TParam1, TParam2, TParam3, TResult>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpyFunc<TParam1, TParam2, TParam3, TResult>(out spy);
+        }
+
+        public static Func<TParam1, TParam2, TParam3, TParam4, TResult> CreateSpyFunc<TParam1, TParam2, TParam3, TParam4, TResult>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpyFunc<TParam1, TParam2, TParam3, TParam4, TResult>(out spy);
+        }
+
+        public static Func<TParam1, TParam2, TParam3, TParam4, TParam5, TResult> CreateSpyFunc<TParam1, TParam2, TParam3, TParam4, TParam5, TResult>(out Spy spy)
+        {
+            return DynamicSpyHelper.CreateSpyFunc<TParam1, TParam2, TParam3, TParam4, TParam5, TResult>(out spy);
         }
     }
 }

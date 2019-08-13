@@ -3,6 +3,7 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace JazSharp.SpyLogic
 {
@@ -33,9 +34,22 @@ namespace JazSharp.SpyLogic
             var key = method.IsStatic ? string.Empty : instance;
             var spy = Spy.Get(method, key);
 
+            return HandleCall(spy, method, instance, parameters);
+        }
+
+        internal static object HandleCall(Spy spy, MethodInfo method, object instance, object[] parameters)
+        {
             if (spy == null)
             {
-                return method.Invoke(instance, parameters);
+                try
+                {
+                    return method.Invoke(instance, parameters);
+                }
+                catch (TargetInvocationException ex)
+                {
+                    ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                    throw;
+                }
             }
 
             spy.CallLog.Add(ImmutableArray.CreateRange(parameters));

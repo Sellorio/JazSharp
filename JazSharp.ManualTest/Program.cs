@@ -1,4 +1,5 @@
 ﻿using JazSharp.Testing;
+using Mono.Cecil;
 
 namespace JazSharp.ManualTest
 {
@@ -11,6 +12,17 @@ namespace JazSharp.ManualTest
             {
                 var result = testRun.ExecuteAsync().Result;
             }
+            //var info = AssemblyDefinition.ReadAssembly(System.Reflection.Assembly.GetExecutingAssembly().Location).MainModule.GetType("JazSharp.ManualTest.Program").Methods;
+        }
+
+        public static void ParamsCaller()
+        {
+            ParamsFunc("v1");
+        }
+
+        public static void ParamsFunc(params string[] input)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

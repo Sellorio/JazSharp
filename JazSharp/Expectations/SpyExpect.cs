@@ -74,6 +74,11 @@ namespace JazSharp.Expectations
         /// <param name="parameters">The expected parameters.</param>
         public void ToHaveBeenCalledWith(params object[] parameters)
         {
+            if (parameters == null)
+            {
+                parameters = new object[0];
+            }
+
             if (parameters.Length != _spy.Method.GetParameters().Length)
             {
                 throw new ArgumentException("Incorrect number of parameters specified for ToHaveBeenCalled.", nameof(parameters));

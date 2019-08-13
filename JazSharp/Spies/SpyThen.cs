@@ -17,6 +17,11 @@ namespace JazSharp.Spies
 
         public SpyWithBehaviour CallThrough()
         {
+            if (_spy.Key is Guid)
+            {
+                throw new InvalidOperationException("Cannot call through on dynamic spies.");
+            }
+
             ConstrainPreviousBehaviour();
             var behaviour = new CallThroughBehaviour();
             _spy.Behaviours.Enqueue(behaviour);

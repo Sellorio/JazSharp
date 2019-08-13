@@ -1,6 +1,7 @@
 ﻿using JazSharp.SpyLogic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using Mono.Collections.Generic;
 using System;
 using System.Collections.Generic;
@@ -51,6 +52,8 @@ namespace JazSharp.Reflection
 
         private static void RewriteMethod(MethodDefinition method)
         {
+            method.Body.SimplifyMacros();
+
             var getMethodByTokenMethod = method.Module.ImportReference(GetMethodFromHandleMethod);
             var ilProcessor = method.Body.GetILProcessor();
 
@@ -66,16 +69,24 @@ namespace JazSharp.Reflection
 
                     if (replacement != null)
                     {
-                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, calledMethod));
+                        var firstInsertedInstruction = Instruction.Create(OpCodes.Ldtoken, calledMethod);
+                        ilProcessor.InsertBefore(instruction, firstInsertedInstruction);
                         ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, calledMethod.DeclaringType));
                         ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Call, getMethodByTokenMethod));
 
                         i += 3; // skip past newly inserted instructions
 
                         ilProcessor.Replace(instruction, replacement);
+
+                        foreach (var referencingInstruction in method.Body.Instructions.Where(x => x.Operand == instruction))
+                        {
+                            referencingInstruction.Operand = firstInsertedInstruction;
+                        }
                     }
                 }
             }
+
+            method.Body.OptimizeMacros();
         }
 
         private static Instruction GetSpyInstruction(ModuleDefinition module, MethodReference calledMethod)
@@ -87,6 +98,11 @@ namespace JazSharp.Reflection
                     var resolvedMethod = calledMethod.Resolve();
 
                     if (resolvedMethod != null && resolvedMethod.IsConstructor)
+                    {
+                        return null;
+                    }
+
+                    if (calledMethod.Parameters.Any(x => x.ParameterType.IsByReference))
                     {
                         return null;
                     }
@@ -190,6 +206,11 @@ namespace JazSharp.Reflection
                 }
 
                 return result;
+            }
+            else if (type is ArrayType arrayType)
+            {
+                var innerType = ResolveTypeIfGeneric(method, type.GetElementType());
+                return new ArrayType(innerType, arrayType.Rank);
             }
 
             return type;
