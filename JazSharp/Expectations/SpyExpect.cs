@@ -39,12 +39,12 @@ namespace JazSharp.Expectations
 
             if (!wasCalled && !_inverted)
             {
-                throw new JazExpectationException("Expected spy to have been called, but it wasn't.");
+                throw new JazExpectationException("Expected spy to have been called, but it wasn't.", 1);
             }
 
             if (wasCalled && _inverted)
             {
-                throw new JazExpectationException("Expected spy to not have been called, but it was.");
+                throw new JazExpectationException("Expected spy to not have been called, but it was.", 1);
             }
         }
 
@@ -58,12 +58,12 @@ namespace JazSharp.Expectations
 
             if (!expectedCallCount && !_inverted)
             {
-                throw new JazExpectationException($"Expected spy to be called {count} times, but it was called {_spy.CallLog.Count} times.");
+                throw new JazExpectationException($"Expected spy to be called {count} times, but it was called {_spy.CallLog.Count} times.", 1);
             }
 
             if (expectedCallCount && _inverted)
             {
-                throw new JazExpectationException($"Expected spy to not be called {count} times, but it was.");
+                throw new JazExpectationException($"Expected spy to not be called {count} times, but it was.", 1);
             }
         }
 
@@ -113,12 +113,13 @@ namespace JazSharp.Expectations
                     + string.Join(", ", parameters)
                     + " ] but actual calls were ["
                     + string.Join(", ", _spy.CallLog.Select(x => " [ " + string.Join(", ", x) + "]"))
-                    + " ].");
+                    + " ].",
+                    1);
             }
 
             if (matchFound && _inverted)
             {
-                throw new JazExpectationException("Expected no call to spy with [ " + string.Join(", ", parameters) + " ] but a call was made.");
+                throw new JazExpectationException("Expected no call to spy with [ " + string.Join(", ", parameters) + " ] but a call was made.", 1);
             }
         }
     }

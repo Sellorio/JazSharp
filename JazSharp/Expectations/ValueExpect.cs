@@ -115,7 +115,7 @@ namespace JazSharp.Expectations
             }
             else
             {
-                throw new JazExpectationException("Expected an enumerable value for ToBeEmpty.");
+                throw new JazExpectationException("Expected an enumerable value for ToBeEmpty.", 1);
             }
         }
 
@@ -236,12 +236,12 @@ namespace JazSharp.Expectations
         {
             if (!conditionMet && !_inverted)
             {
-                throw new JazExpectationException(conditionNotMetFailure);
+                throw new JazExpectationException(conditionNotMetFailure, 2);
             }
 
             if (conditionMet && _inverted)
             {
-                throw new JazExpectationException(conditionMetFailure);
+                throw new JazExpectationException(conditionMetFailure, 2);
             }
         }
 

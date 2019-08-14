@@ -140,7 +140,7 @@ namespace JazSharp
 
         public static void Fail(string message = null)
         {
-            throw new JazExpectationException(message ?? "The test was explicitly failed.");
+            throw new JazExpectationException(message ?? "The test was explicitly failed.", 1);
         }
     }
 }
