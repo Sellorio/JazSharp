@@ -175,7 +175,6 @@ namespace JazSharp.Reflection
                 var handleCallMethod = method.Module.ImportReference(HandleCallMethod);
                 var methodInvokeMethod = method.Module.ImportReference(MethodInvokeMethod);
                 var getMethodByTokenMethod = method.Module.ImportReference(GetMethodFromHandleMethod);
-                var spyExecutionHelperType = method.Module.ImportReference(typeof(SpyExecutionHelper));
                 var objectType = method.Module.ImportReference(typeof(object));
                 var objectArrayType = new ArrayType(objectType);
                 var innerExceptionGetter = method.Module.ImportReference(InnerExceptionGetter);
@@ -188,10 +187,19 @@ namespace JazSharp.Reflection
                         Mono.Cecil.MethodAttributes.Private | Mono.Cecil.MethodAttributes.Static,
                         calledMethod.ReturnType);
 
+                wrapperMethodDefinition.DeclaringType = method.DeclaringType;
+
+                foreach (var genericParameter in resolvedCalledMethod.DeclaringType.GenericParameters)
+                {
+                    wrapperMethodDefinition.GenericParameters.Add(new GenericParameter(genericParameter.Name, wrapperMethodDefinition));
+                }
+
                 foreach (var genericParameter in resolvedCalledMethod.GenericParameters)
                 {
-                    wrapperMethodDefinition.GenericParameters.Add(genericParameter);
+                    wrapperMethodDefinition.GenericParameters.Add(new GenericParameter(genericParameter.Name, wrapperMethodDefinition));
                 }
+
+                wrapperMethodDefinition.ReturnType = ReplaceGenericParameterReferences(method, calledMethod.ReturnType, wrapperMethodDefinition.GenericParameters);
 
                 if (!resolvedCalledMethod.IsStatic)
                 {
@@ -200,7 +208,13 @@ namespace JazSharp.Reflection
 
                 foreach (var parameter in resolvedCalledMethod.Parameters)
                 {
-                    wrapperMethodDefinition.Parameters.Add(new ParameterDefinition(parameter.Name, parameter.Attributes, parameter.ParameterType));
+                    var actualParameterType =
+                        ReplaceGenericParameterReferences(
+                            method,
+                            parameter.ParameterType,
+                            wrapperMethodDefinition.GenericParameters);
+
+                    wrapperMethodDefinition.Parameters.Add(new ParameterDefinition(parameter.Name, parameter.Attributes, actualParameterType));
                 }
 
                 wrapperMethodDefinition.Parameters.Add(new ParameterDefinition(methodBaseType));
@@ -210,27 +224,20 @@ namespace JazSharp.Reflection
 
                 if (isFunc)
                 {
-                    wrapperMethodDefinition.Body.Variables.Add(new VariableDefinition(resolvedCalledMethod.ReturnType));
-                }
-
-                var defaultVariables = new Dictionary<TypeReference, VariableDefinition>();
-
-                foreach (var outParameter in wrapperMethodDefinition.Parameters.Where(x => x.IsOut))
-                {
-                    if (!defaultVariables.ContainsKey(outParameter.ParameterType))
-                    {
-                        var variable = new VariableDefinition(ResolveIfByRefType(outParameter.ParameterType));
-                        defaultVariables.Add(outParameter.ParameterType, variable);
-                        wrapperMethodDefinition.Body.Variables.Add(variable);
-                    }
+                    wrapperMethodDefinition.Body.Variables.Add(new VariableDefinition(wrapperMethodDefinition.ReturnType));
                 }
 
                 var ilProcessor = wrapperMethodDefinition.Body.GetILProcessor();
 
-                foreach (var defaultVariable in defaultVariables.Values)
+                for (var i = 0; i < wrapperMethodDefinition.Parameters.Count; i++)
                 {
-                    ilProcessor.Emit(OpCodes.Ldloca, defaultVariable);
-                    ilProcessor.Emit(OpCodes.Initobj, defaultVariable.VariableType);
+                    var parameter = wrapperMethodDefinition.Parameters[i];
+
+                    if (parameter.IsOut)
+                    {
+                        ilProcessor.Emit(OpCodes.Ldarg, i);
+                        ilProcessor.Emit(OpCodes.Initobj, ResolveIfByRefType(parameter.ParameterType));
+                    }
                 }
 
                 ilProcessor.Emit(OpCodes.Ldc_I4, wrapperMethodDefinition.Parameters.Count - 1);
@@ -243,13 +250,10 @@ namespace JazSharp.Reflection
                     ilProcessor.Emit(OpCodes.Dup);
                     ilProcessor.Emit(OpCodes.Ldc_I4, i);
 
-                    if (parameter.IsOut)
-                    {
-                        ilProcessor.Emit(OpCodes.Ldloc, defaultVariables[parameter.ParameterType]);
-                    }
-                    else if (parameter.ParameterType.IsByReference)
+                    if (parameter.ParameterType.IsByReference)
                     {
                         var actualParameterType = ResolveIfByRefType(wrapperMethodDefinition.Parameters[i].ParameterType);
+
                         ilProcessor.Emit(OpCodes.Ldarg, i);
                         ilProcessor.Emit(OpCodes.Ldobj, actualParameterType);
                         ilProcessor.Emit(OpCodes.Box, actualParameterType);
@@ -299,8 +303,6 @@ namespace JazSharp.Reflection
                     var stLoc = Instruction.Create(OpCodes.Stloc_2);
                     ilProcessor.Append(stLoc);
                     leaveAfterThisInstruction = stLoc;
-                    //ilProcessor.Emit(OpCodes.Ldloca, wrapperMethodDefinition.Body.Variables[1]);
-                    //ilProcessor.Emit(OpCodes.Initobj, wrapperMethodDefinition.ReturnType);
                 }
                 else
                 {
@@ -382,25 +384,38 @@ namespace JazSharp.Reflection
                 byRefWrappers.Add(resolvedCalledMethod, wrapperMethodDefinition);
             }
 
-            MethodReference callReference;
+            MethodReference wrapperCall;
+            var genericType = calledMethod.DeclaringType as GenericInstanceType;
+            var genericMethod = calledMethod as GenericInstanceMethod;
 
-            if (calledMethod is GenericInstanceMethod genericMethod)
+            if (genericType != null || genericMethod != null)
             {
-                var callGenericReference = new GenericInstanceMethod(wrapperMethodDefinition);
-                
-                foreach (var genericArgument in genericMethod.GenericArguments)
+                var genericCall = new GenericInstanceMethod(wrapperMethodDefinition);
+
+                if (genericType != null)
                 {
-                    callGenericReference.GenericArguments.Add(genericArgument);
+                    foreach (var genericArgument in genericType.GenericArguments)
+                    {
+                        genericCall.GenericArguments.Add(genericArgument);
+                    }
                 }
 
-                callReference = callGenericReference;
+                if (genericMethod != null)
+                {
+                    foreach (var genericArgument in genericMethod.GenericArguments)
+                    {
+                        genericCall.GenericArguments.Add(genericArgument);
+                    }
+                }
+
+                wrapperCall = genericCall;
             }
             else
             {
-                callReference = wrapperMethodDefinition;
+                wrapperCall = wrapperMethodDefinition;
             }
 
-            return Instruction.Create(OpCodes.Call, callReference);
+            return Instruction.Create(OpCodes.Call, wrapperCall);
         }
 
         private static TypeReference ResolveTypeIfGeneric(MethodReference method, TypeReference type)
@@ -488,6 +503,44 @@ namespace JazSharp.Reflection
             if (type is ByReferenceType byReferenceType)
             {
                 return byReferenceType.ElementType;
+            }
+
+            return type;
+        }
+
+        private static TypeReference ReplaceGenericParameterReferences(MethodDefinition method, TypeReference type, IList<GenericParameter> newParameterSource)
+        {
+            if (type is ByReferenceType refType)
+            {
+                return new ByReferenceType(ReplaceGenericParameterReferences(method, refType.ElementType, newParameterSource));
+            }
+            else if (type is GenericParameter genericParameter) // using the same type generic parameters
+            {
+                var flattenedPosition = genericParameter.Position;
+
+                // method contains generic type parameters of original method as well
+                if (genericParameter.DeclaringMethod != null)
+                {
+                    flattenedPosition += genericParameter.DeclaringMethod.DeclaringType.GenericParameters.Count;
+                }
+
+                return newParameterSource[flattenedPosition];
+            }
+            else if (type is GenericInstanceType genericInstanceType)
+            {
+                var result = new GenericInstanceType(method.Module.ImportReference(genericInstanceType.Resolve()));
+
+                foreach (var arg in genericInstanceType.GenericArguments)
+                {
+                    result.GenericArguments.Add(ReplaceGenericParameterReferences(method, arg, newParameterSource));
+                }
+
+                return result;
+            }
+            else if (type is ArrayType arrayType)
+            {
+                var innerType = ReplaceGenericParameterReferences(method, type, newParameterSource);
+                return new ArrayType(innerType, arrayType.Rank);
             }
 
             return type;

@@ -18,20 +18,9 @@ namespace JazSharp.ManualTest
             }
         }
 
-        public void Test<T>(T p, ref T p2, out T p3)
+        public void Test<T>(T p, out T p3)
         {
-            var data = new object[] { p, p2, default(T) };
-            try
-            {
-                typeof(Program).GetMethod("Main").Invoke(null, new object[0]);
-            }
-            catch (TargetInvocationException ex)
-            {
-                ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-            }
-            p = (T)data[0];
-            p2 = (T)data[1];
-            p3 = (T)data[2];
+            p3 = default;
         }
     }
 }
