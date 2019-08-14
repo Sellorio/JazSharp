@@ -302,6 +302,20 @@ namespace JazSharp.Tests
                         Expect(cast).ToBeDefault();
                         Expect(result).ToBeTrue();
                     });
+
+                    It("should support being called when contained by a nested non-generic type.", () =>
+                    {
+                        var result = TestSubject<string>.TestSubjectChild.Cast(testValue, out var cast);
+                        Expect(cast).ToBe(testValue);
+                        Expect(result).ToBeTrue();
+                    });
+
+                    It("should support calling another method with generic parameters.", () =>
+                    {
+                        var success = TestSubject<string>.TestSubjectChild.TryConvert<string>("123", out var result);
+                        Expect(result).ToBe("123");
+                        Expect(success).ToBe(true);
+                    });
                 });
             });
         }
@@ -346,6 +360,34 @@ namespace JazSharp.Tests
             {
                 cast = value as TValue;
                 return cast != null;
+            }
+
+            public class TestSubjectChild
+            {
+                public static bool Cast(object value, out TValue cast)
+                {
+                    cast = value as TValue;
+                    return cast != null;
+                }
+
+                public static bool TryConvert<TTarget>(TValue value, out TTarget result)
+                {
+                    result = OtherTestSubject<TTarget>.Convert(value);
+                    return result != default;
+                }
+            }
+        }
+
+        private class OtherTestSubject<TV1>
+        {
+            public static TV1 Convert<TV2>(TV2 v)
+            {
+                if (v is TV1)
+                {
+                    return (TV1)(object)v;
+                }
+
+                return default;
             }
         }
 

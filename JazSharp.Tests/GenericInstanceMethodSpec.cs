@@ -111,6 +111,13 @@ namespace JazSharp.Tests
                     var result = testSubject.CallFunc2(() => 5);
                     Expect(result).ToBe(5);
                 });
+
+                It("should support calling a method on a nested class in a generic class.", () =>
+                {
+                    var testSubject = new TestSubject<int>.TestSubjectChild();
+                    var result = testSubject.CallFunc(() => 5);
+                    Expect(result).ToBe(5);
+                });
             });
         }
 
@@ -157,6 +164,14 @@ namespace JazSharp.Tests
             public object CallFunc2(TVD func)
             {
                 return ((Delegate)(object)func).Method.Invoke(((Delegate)(object)func).Target, new object[0]);
+            }
+
+            public class TestSubjectChild
+            {
+                public TVD CallFunc(Func<TVD> func)
+                {
+                    return func.Invoke();
+                }
             }
         }
 
