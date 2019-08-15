@@ -40,14 +40,21 @@ namespace JazSharp.Reflection
 
         internal static void RewriteAssembly(string filename)
         {
-            using (var assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true, ReadSymbols = true }))
+            try
             {
-                foreach (var type in assembly.MainModule.Types.Where(x => !x.IsInterface))
+                using (var assembly = AssemblyDefinition.ReadAssembly(filename, new ReaderParameters { ReadWrite = true, ReadSymbols = true }))
                 {
-                    RewriteType(type);
-                }
+                    foreach (var type in assembly.MainModule.Types.Where(x => !x.IsInterface))
+                    {
+                        RewriteType(type);
+                    }
 
-                assembly.Write(new WriterParameters { WriteSymbols = true });
+                    assembly.Write(new WriterParameters { WriteSymbols = true });
+                }
+            }
+            catch (BadImageFormatException)
+            {
+                // native dll, no rewrite required
             }
         }
 
@@ -73,20 +80,31 @@ namespace JazSharp.Reflection
 
         private static void RewriteMethod(MethodDefinition method, Dictionary<MethodDefinition, MethodDefinition> byRefWrappers)
         {
+            if (method.IsPInvokeImpl)
+            {
+                return;
+            }
+
             method.Body.SimplifyMacros();
 
             var getMethodByTokenMethod = method.Module.ImportReference(GetMethodFromHandleMethod);
             var ilProcessor = method.Body.GetILProcessor();
+
+            var hasConstrainedModifier = false;
 
             // needs to be for loop to stop exception when replacing instructions
             for (var i = 0; i < method.Body.Instructions.Count; i++)
             {
                 var instruction = method.Body.Instructions[i];
 
-                if (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)
+                if (instruction.OpCode == OpCodes.Constrained)
+                {
+                    hasConstrainedModifier = true;
+                }
+                else if ((instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt) && !hasConstrainedModifier)
                 {
                     var calledMethod = (MethodReference)instruction.Operand;
-                    var replacement = GetSpyInstruction(method, calledMethod, byRefWrappers);
+                    var replacement = GetSpyInstruction(method, calledMethod, byRefWrappers, instruction.OpCode == OpCodes.Call);
 
                     if (replacement != null)
                     {
@@ -99,18 +117,31 @@ namespace JazSharp.Reflection
 
                         ilProcessor.Replace(instruction, replacement);
 
-                        foreach (var referencingInstruction in method.Body.Instructions.Where(x => x.Operand == instruction))
-                        {
-                            referencingInstruction.Operand = firstInsertedInstruction;
-                        }
+                        UpdateBranches(method.Body.Instructions, instruction, firstInsertedInstruction);
                     }
+                }
+                else
+                {
+                    hasConstrainedModifier = false;
                 }
             }
 
             method.Body.OptimizeMacros();
         }
 
-        private static Instruction GetSpyInstruction(MethodDefinition method, MethodReference calledMethod, Dictionary<MethodDefinition, MethodDefinition> byRefWrappers)
+        private static void UpdateBranches(IList<Instruction> instructions, Instruction from, Instruction to)
+        {
+            foreach (var referencingInstruction in instructions.Where(x => x.Operand == from))
+            {
+                referencingInstruction.Operand = to;
+            }
+        }
+
+        private static Instruction GetSpyInstruction(
+            MethodDefinition method,
+            MethodReference calledMethod,
+            Dictionary<MethodDefinition, MethodDefinition> byRefWrappers,
+            bool isUsingCallOpCode)
         {
             if (calledMethod != null)
             {
@@ -118,7 +149,12 @@ namespace JazSharp.Reflection
                 {
                     var resolvedCalledMethod = calledMethod.Resolve();
 
-                    if (resolvedCalledMethod != null && resolvedCalledMethod.IsConstructor)
+                    // calls to base.XXX for properties or methods - cannot be spied on at this time.
+                    var isBaseCall = resolvedCalledMethod != null && isUsingCallOpCode && resolvedCalledMethod.IsVirtual;
+                    // cannot spy on constructors intentionally
+                    var isConstructor = resolvedCalledMethod != null && resolvedCalledMethod.IsConstructor;
+
+                    if (isBaseCall || isConstructor)
                     {
                         return null;
                     }
@@ -142,7 +178,7 @@ namespace JazSharp.Reflection
                         genericMethod.GenericArguments.Add(ResolveTypeIfGeneric(calledMethod, calledMethod.ReturnType));
                     }
 
-                    if (calledMethod.HasThis)
+                    if (!isStatic)
                     {
                         genericMethod.GenericArguments.Add(calledMethod.DeclaringType);
                     }

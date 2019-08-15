@@ -328,3 +328,5 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+!JazSharp.Tests/JazSharp.Tests.NativeLibrary.dll

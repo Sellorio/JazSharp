@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace JazSharp.Expectations
 {
@@ -232,16 +233,96 @@ namespace JazSharp.Expectations
                 $"Expected value {SafeToString(_value)} to not be greater than nor equal to {SafeToString(other)}.");
         }
 
-        private void ThrowIfFailed(bool conditionMet, string conditionNotMetFailure, string conditionMetFailure)
+        /// <summary>
+        /// Tests that the value is a string that matches the given pattern.
+        /// </summary>
+        /// <param name="regex">The pattern to match against.</param>
+        public void ToMatch(string regex)
+        {
+            ToMatchInternal(new Regex(regex));
+        }
+
+        /// <summary>
+        /// Tests that the value is a string that matches the given pattern.
+        /// </summary>
+        /// <param name="regex">The pattern to match against.</param>
+        public void ToMatch(Regex regex)
+        {
+            ToMatchInternal(regex);
+        }
+
+        /// <summary>
+        /// Tests that the value is a string that contains the given text.
+        /// </summary>
+        /// <param name="value">The text that should be contained in the value.</param>
+        /// <param name="ignoreCase">Whether or not to ignore the casing of the text. Defaults to false.</param>
+        public void ToContain(string value, bool ignoreCase = false)
+        {
+            if (_value is string str)
+            {
+                if (ignoreCase)
+                {
+                    str = str.ToLowerInvariant();
+                    value = str.ToLowerInvariant();
+                }
+
+                var conditionMet = str.Contains(value);
+
+                ThrowIfFailed(
+                    conditionMet,
+                    $"Expected value {SafeToString(_value)} to contain /{SafeToString(value)}/.",
+                    $"Expected value {SafeToString(_value)} not to contain /{SafeToString(value)}/.");
+
+                return;
+            }
+
+            throw new JazExpectationException($"Expected value {SafeToString(_value)} to contain {SafeToString(value)} but it isn't a string.", 1);
+        }
+
+        /// <summary>
+        /// Tests that the value is an object or list containing the given object's
+        /// properties, list items or list items with a subset of properties.
+        /// </summary>
+        /// <param name="value"></param>
+        public void ToContain(object value)
+        {
+            var path = string.Empty;
+            var conditionMet = DeepCompareHelper.DeepContains(_value, value, ref path);
+
+            ThrowIfFailed(
+                conditionMet,
+                $"Expected value {SafeToString(_value)} to contain /{SafeToString(value)}/.",
+                $"Expected value {SafeToString(_value)} not to contain /{SafeToString(value)}/.");
+        }
+
+        private void ToMatchInternal(Regex regex)
+        {
+            if (_value is string str)
+            {
+                var conditionMet = regex.IsMatch(str);
+
+                ThrowIfFailed(
+                    conditionMet,
+                    $"Expected value {SafeToString(_value)} to match /{regex}/.",
+                    $"Expected value {SafeToString(_value)} not to match /{regex}/.",
+                    3);
+
+                return;
+            }
+
+            throw new JazExpectationException($"Expected value {SafeToString(_value)} to match /{regex}/ but it isn't a string.", 2);
+        }
+
+        private void ThrowIfFailed(bool conditionMet, string conditionNotMetFailure, string conditionMetFailure, int stackRowsToTrim = 2)
         {
             if (!conditionMet && !_inverted)
             {
-                throw new JazExpectationException(conditionNotMetFailure, 2);
+                throw new JazExpectationException(conditionNotMetFailure, stackRowsToTrim);
             }
 
             if (conditionMet && _inverted)
             {
-                throw new JazExpectationException(conditionMetFailure, 2);
+                throw new JazExpectationException(conditionMetFailure, stackRowsToTrim);
             }
         }
 

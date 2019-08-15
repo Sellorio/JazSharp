@@ -37,11 +37,39 @@ namespace JazSharp.Expectations
             var result =
                 CheckAnyMatcher(left, leftType, rightType) ??
                 CheckAnyMatcher(right, rightType, leftType) ??
-                CheckEquality(left, right) ??
+                CheckEquals(left, right) ??
                 CheckNotBasicType(leftType) ??
                 CheckNotBasicType(rightType) ??
-                CheckEnumerable(left, leftType, right, rightType, ref path) ??
-                CheckProperties(left, leftType, right, rightType, ref path) ??
+                CheckExactEnumerable(left, leftType, right, rightType, ref path) ??
+                CheckExactProperties(left, leftType, right, rightType, ref path) ??
+                true;
+
+            return result;
+        }
+
+        internal static bool DeepContains(object container, object subset, ref string path)
+        {
+            if (container == null)
+            {
+                return subset == null || subset is AnyMatcher anyMatcher && anyMatcher.AllowNull;
+            }
+
+            if (subset == null)
+            {
+                return container is AnyMatcher anyMatcher && anyMatcher.AllowNull;
+            }
+
+            var containerType = container.GetType();
+            var subsetType = subset.GetType();
+
+            var result =
+                CheckAnyMatcher(container, containerType, subsetType) ??
+                CheckAnyMatcher(subset, subsetType, containerType) ??
+                CheckEquals(container, subset) ??
+                CheckNotBasicType(containerType) ??
+                CheckNotBasicType(subsetType) ??
+                CheckEnumerableContains(container, containerType, subset, subsetType, ref path) ??
+                CheckContainsProperties(container, containerType, subset, subsetType, ref path) ??
                 true;
 
             return result;
@@ -58,7 +86,7 @@ namespace JazSharp.Expectations
             return null;
         }
 
-        private static bool? CheckEquality(object object1, object object2)
+        private static bool? CheckEquals(object object1, object object2)
         {
             return object1.Equals(object2) || object2.Equals(object1) ? (bool?)true : null;
         }
@@ -68,7 +96,7 @@ namespace JazSharp.Expectations
             return _basicTypes.Contains(type) ? (bool?)false : null;
         }
 
-        private static bool? CheckEnumerable(object object1, Type type1, object object2, Type type2, ref string path)
+        private static bool? CheckExactEnumerable(object object1, Type type1, object object2, Type type2, ref string path)
         {
             if (typeof(IEnumerable).IsAssignableFrom(type1))
             {
@@ -104,7 +132,48 @@ namespace JazSharp.Expectations
             return null;
         }
 
-        private static bool? CheckProperties(object object1, Type type1, object object2, Type type2, ref string path)
+        private static bool? CheckEnumerableContains(object container, Type containerType, object subset, Type subsetType, ref string path)
+        {
+            if (typeof(IEnumerable).IsAssignableFrom(containerType))
+            {
+                if (!typeof(IEnumerable).IsAssignableFrom(subsetType))
+                {
+                    return false;
+                }
+
+                var containerList = ((IEnumerable)container).Cast<object>().ToList();
+                var subsetList = ((IEnumerable)subset).Cast<object>().ToList();
+
+                foreach (var subsetItem in subsetList)
+                {
+                    object matchingItem = null;
+
+                    foreach (var containerItem in containerList)
+                    {
+                        string _ = null;
+                        if (DeepContains(containerItem, subsetItem, ref _))
+                        {
+                            matchingItem = containerItem;
+                            break;
+                        }
+                    }
+
+                    if (matchingItem == null)
+                    {
+                        path += "[" + subsetList.IndexOf(subsetItem) + "]";
+                        return false;
+                    }
+
+                    containerList.Remove(matchingItem); // don't match the same item twice
+                }
+
+                return true;
+            }
+
+            return null;
+        }
+
+        private static bool? CheckExactProperties(object object1, Type type1, object object2, Type type2, ref string path)
         {
             var properties1 = type1.GetProperties().OrderBy(x => x.Name).ToList();
             var properties2 = type2.GetProperties().OrderBy(x => x.Name).ToList();
@@ -119,6 +188,33 @@ namespace JazSharp.Expectations
             {
                 var childPath = path + "." + properties1[i].Name;
                 var result = DeepCompare(properties1[i].GetValue(object1), properties2[i].GetValue(object2), ref childPath);
+
+                if (!result)
+                {
+                    path = childPath;
+                    return false;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool? CheckContainsProperties(object object1, Type type1, object object2, Type type2, ref string path)
+        {
+            var properties1 = type1.GetProperties().OrderBy(x => x.Name).ToList();
+            var properties2 = type2.GetProperties().OrderBy(x => x.Name).ToList();
+
+            var properties = properties2.ToDictionary(x => x, x => properties1.FirstOrDefault(y => y.Name == x.Name));
+
+            if (properties.Any(x => x.Value == null))
+            {
+                return false;
+            }
+
+            foreach (var property in properties)
+            {
+                var childPath = path + "." + property.Key.Name;
+                var result = DeepContains(property.Value.GetValue(object1), property.Key.GetValue(object2), ref childPath);
 
                 if (!result)
                 {

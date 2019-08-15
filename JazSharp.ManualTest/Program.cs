@@ -9,8 +9,8 @@ namespace JazSharp.ManualTest
     {
         static void Main(string[] _)
         {
-            var info = AssemblyDefinition.ReadAssembly(System.Reflection.Assembly.GetExecutingAssembly().Location).MainModule.GetType("JazSharp.ManualTest.Program").Methods;
-
+            var info = AssemblyDefinition.ReadAssembly(Assembly.GetExecutingAssembly().Location).MainModule.GetType("JazSharp.ManualTest.Program").Methods;
+            
             using (var testCollection = TestCollection.FromSources(new[] { @"C:\Users\seamillo\source\repos\JazSharp\JazSharp.Tests\bin\Debug\netcoreapp2.2\JazSharp.Tests.dll" }))
             using (var testRun = testCollection.CreateTestRun())
             {
@@ -18,9 +18,15 @@ namespace JazSharp.ManualTest
             }
         }
 
-        public void Test<T>(T p, out T p3)
+        public string Test<T>(T p)
+            where T : struct
         {
-            p3 = default;
+            return p.ToString();
+        }
+
+        public override string ToString()
+        {
+            return ToString() + "x";
         }
     }
 }

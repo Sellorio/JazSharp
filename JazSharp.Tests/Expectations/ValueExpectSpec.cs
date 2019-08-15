@@ -1,4 +1,5 @@
 ﻿using JazSharp.Expectations;
+using System.Text.RegularExpressions;
 
 namespace JazSharp.Tests.Expectations
 {
@@ -633,6 +634,157 @@ namespace JazSharp.Tests.Expectations
                         {
                             Expect(() => Expect(3).Not.ToBeLessThanOrEqualTo(5)).ToThrow<JazExpectationException>();
                         });
+                    });
+                });
+
+                Describe(nameof(ValueExpect<string>.ToMatch), () =>
+                {
+                    It("should fail if the value is not a string.", () =>
+                    {
+                        Expect(() => Expect(12).ToMatch("[0-9]+")).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if the value is not a string.", () =>
+                    {
+                        Expect(() => Expect(12).ToMatch(new Regex("[0-9]+"))).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if the value does not match the regex.", () =>
+                    {
+                        Expect(() => Expect("abc").ToMatch("[ab]+d")).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if the value does not match the regex.", () =>
+                    {
+                        Expect(() => Expect("abc").ToMatch(new Regex("[ab]+d"))).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should pass if the value does matches the regex.", () =>
+                    {
+                        Expect("abc").ToMatch("[ab]+c");
+                    });
+
+                    It("should pass if the value does matches the regex.", () =>
+                    {
+                        Expect("abc").ToMatch(new Regex("[ab]+c"));
+                    });
+
+                    Describe("with Not", () =>
+                    {
+                        It("should still fail if the value is not a string.", () =>
+                        {
+                            Expect(() => Expect(12).Not.ToMatch("[0-9]+")).ToThrow<JazExpectationException>();
+                        });
+
+                        It("should still fail if the value is not a string.", () =>
+                        {
+                            Expect(() => Expect(12).Not.ToMatch(new Regex("[0-9]+"))).ToThrow<JazExpectationException>();
+                        });
+
+                        It("should pass if the value does not match the regex.", () =>
+                        {
+                            Expect("abc").Not.ToMatch("[ab]+d");
+                        });
+
+                        It("should pass if the value does not match the regex.", () =>
+                        {
+                            Expect("abc").Not.ToMatch(new Regex("[ab]+d"));
+                        });
+
+                        It("should fail if the value does matches the regex.", () =>
+                        {
+                            Expect(() => Expect("abc").Not.ToMatch("[ab]+c")).ToThrow<JazExpectationException>();
+                        });
+
+                        It("should fail if the value does matches the regex.", () =>
+                        {
+                            Expect(() => Expect("abc").Not.ToMatch(new Regex("[ab]+c"))).ToThrow<JazExpectationException>();
+                        });
+                    });
+                });
+
+                Describe(nameof(ValueExpect<object>.ToContain), () =>
+                {
+                    It("should fail if value is not string and checking against a string value.", () =>
+                    {
+                        Expect(() => Expect(12).ToContain("12")).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if value does not contain the string.", () =>
+                    {
+                        Expect(() => Expect("1234").ToContain("14")).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if value doesn't match given string casing.", () =>
+                    {
+                        Expect(() => Expect("aBcD").ToContain("bc")).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if list is missing the given value.", () =>
+                    {
+                        Expect(() => Expect(new[] { "a", "b", "c" }).ToContain(new[] { "a", "d" })).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if object is missing properties.", () =>
+                    {
+                        Expect(() => Expect(new { p1 = "x", p2 = "y" }).ToContain(new { p1 = "x", p3 = "z" })).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if list in object is missing values.", () =>
+                    {
+                        Expect(() => Expect(new { p1 = new[] { "a", "b", "c" } }).ToContain(new { p1 = new[] { "a", "d" } })).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if object in list is missing properties.", () =>
+                    {
+                        Expect(() => Expect(new[] { new { p1 = "x", p2 = "y" } }).ToContain(new[] { new { p1 = "x", p3 = "z" } })).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if duplicate items are expected but missing.", () =>
+                    {
+                        Expect(() => Expect(new[] { "a", "b" }).ToContain(new[] { "b", "b" })).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should fail if testing similar items in list in unexpected order.", () =>
+                    {
+                        Expect(() => Expect(new object[] { new { p1 = "x", p2 = "y", p3 = "z" }, new { p1 = "x", p2 = "y" } })
+                            .ToContain(new object[] { new { p1 = "x" }, new { p1 = "x", p3 = "z" } })).ToThrow<JazExpectationException>();
+                    });
+
+                    It("should pass if value contains string.", () =>
+                    {
+                        Expect("1234").ToContain("23");
+                    });
+
+                    It("should pass if value casing is different but ignore casing is true.", () =>
+                    {
+                        Expect("aBcD").ToContain("bc", true);
+                    });
+
+                    It("should pass if list contains given items.", () =>
+                    {
+                        Expect(new[] { "a", "b", "c" }).ToContain(new[] { "b", "c" });
+                    });
+
+                    It("should pass if object contains given properties.", () =>
+                    {
+                        Expect(new { p1 = "x", p2 = "y", p3 = "z" }).ToContain(new { p2 = "y", p3 = "z" });
+                    });
+
+                    It("should pass if list in object contains expect items.", () =>
+                    {
+                        Expect(new { list = new[] { "a", "b", "c" } }).ToContain(new { list = new[] { "b", "c" } });
+                    });
+
+                    It("should pass if object in list contains expected properties.", () =>
+                    {
+                        Expect(new[] { new { p1 = "x", p2 = "y", p3 = "z" } }).ToContain(new[] { new { p2 = "y", p3 = "z" } });
+                    });
+
+                    It("should pass if testing similar items in list in correct order.", () =>
+                    {
+                        Expect(new object[] { new { p1 = "x", p2 = "y" }, new { p1 = "x", p2 = "y", p3 = "z" } })
+                            .ToContain(new object[] { new { p1 = "x" }, new { p1 = "x", p3 = "z" } });
                     });
                 });
             });
