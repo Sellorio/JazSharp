@@ -27,6 +27,12 @@ namespace JazSharp.Expectations
             _inverted = inverted;
         }
 
+        /// <summary>
+        /// Tests that an exception of the given type was thrown. Exceptions inheriting from this exception
+        /// type will fail the test.
+        /// </summary>
+        /// <typeparam name="TException">The expected type of the exception.</typeparam>
+        /// <returns>The exception that was thrown. This will return null if <see cref="Not"/> was used.</returns>
         public TException ToThrow<TException>()
             where TException : Exception
         {

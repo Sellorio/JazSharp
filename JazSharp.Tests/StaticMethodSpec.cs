@@ -40,6 +40,38 @@ namespace JazSharp.Tests
                     var thrown = Expect(() => TestSubject.Iterate(3)).ToThrow<TestException>();
                     Expect(thrown).ToBe(exception);
                 });
+
+                // the only non-generic spy entry point
+                Describe("with no parameters", () =>
+                {
+                    It("should call through by default.", () =>
+                    {
+                        TestSubject.Increment();
+                        Expect(TestSubject.Value).ToBe(1);
+                    });
+
+                    It("should do nothing if spied on.", () =>
+                    {
+                        Jaz.SpyOn(typeof(TestSubject), nameof(TestSubject.Increment));
+                        TestSubject.Increment();
+                        Expect(TestSubject.Value).ToBeDefault();
+                    });
+
+                    It("should call through as configured.", () =>
+                    {
+                        Jaz.SpyOn(typeof(TestSubject), nameof(TestSubject.Increment)).And.CallThrough();
+                        TestSubject.Increment();
+                        Expect(TestSubject.Value).ToBe(1);
+                    });
+
+                    It("should throw an exception as configured.", () =>
+                    {
+                        var exception = new TestException();
+                        Jaz.SpyOn(typeof(TestSubject), nameof(TestSubject.Increment)).And.Throw(exception);
+                        var thrown = Expect(() => TestSubject.Increment()).ToThrow<TestException>();
+                        Expect(thrown).ToBe(exception);
+                    });
+                });
             });
 
             Describe("A static function", () =>
@@ -101,6 +133,11 @@ namespace JazSharp.Tests
             public static void Iterate(int amount)
             {
                 Value += amount;
+            }
+
+            public static void Increment()
+            {
+                Value++;
             }
 
             public static int Add5(int value)

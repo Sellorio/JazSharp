@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>JazSharp</id>
+    <version>1.0.0-beta1</version>
+    <title>JazSharp</title>
+    <authors>Sea Millo</authors>
+    <owners>Sea Millo</owners>
+    <projectUrl>https://github.com/Sellorio/JazSharp</projectUrl>
+    <!--<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      JazSharp is a unit testing and method-level mocking framework heavily inspired by Jasmine (JavaScript).
+      Major benefits of using this framework over others is that you can mock non-virtual and static calls
+      removing interfaces and dependency injection as requirements for effective unit testing.
+    </description>
+    <releaseNotes>Initial beta release.</releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>C# csharp jasmine unit testing</tags>
+  </metadata>
+  <files>
+    <file src="bin\Release\netstandard2.0\JazSharp.dll" target="lib\netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\JazSharp.xml" target="lib\netstandard2.0" />
+  </files>
+</package>

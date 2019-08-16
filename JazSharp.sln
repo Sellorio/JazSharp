@@ -15,7 +15,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework", "Framework", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AutomatedTests", "AutomatedTests", "{BAECF32D-41BE-4F98-B795-E4B80370CFD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JazSharp.Tests.ForReference", "JazSharp.Tests.ForReference\JazSharp.Tests.ForReference.csproj", "{89DCB7CC-1FFD-43D2-913E-B43DB5752CFC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JazSharp.Tests.ForReference", "JazSharp.Tests.ForReference\JazSharp.Tests.ForReference.csproj", "{89DCB7CC-1FFD-43D2-913E-B43DB5752CFC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{570D394A-77DE-4E1E-9278-4BABA5F21574}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -30,7 +30,7 @@ namespace JazSharp.SpyLogic.Behaviour
         internal MethodInfo ExactMethod { get; }
 
         /// <summary>
-        /// Whether or not the <see cref="ISpyFeature"/> has set the <see cref="Result"/>
+        /// Whether or not the <see cref="SpyBehaviourBase"/> has set the <see cref="Result"/>
         /// to return from the spied method.
         /// </summary>
         internal bool HasResult { get; private set; }

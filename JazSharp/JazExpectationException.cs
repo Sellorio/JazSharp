@@ -3,16 +3,22 @@ using System.Linq;
 
 namespace JazSharp
 {
+    /// <summary>
+    /// An exception that is thrown when an expectation fails.
+    /// </summary>
     public class JazExpectationException : Exception
     {
         private readonly int _stackTraceTrimAmount;
         private string _trimmedStackTrace;
 
+        /// <summary>
+        /// Gets a string representation of the immediate frames on the call stack.
+        /// </summary>
         public override string StackTrace =>
             _trimmedStackTrace ??
                 (_trimmedStackTrace = GenerateTrimmedStackTrace(base.StackTrace, _stackTraceTrimAmount));
 
-        public JazExpectationException(string message, int stackTraceRowsToTrim)
+        internal JazExpectationException(string message, int stackTraceRowsToTrim)
             : base(message)
         {
             _stackTraceTrimAmount = stackTraceRowsToTrim;

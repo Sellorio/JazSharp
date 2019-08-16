@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace JazSharp.Spies
 {
+    /// <summary>
+    /// An intermediary object used when defining the behaviour of a spy.
+    /// </summary>
     public class SpyAnd : ISpy
     {
         private readonly Dictionary<int, object> _parameterChanges = new Dictionary<int, object>();
@@ -16,6 +19,11 @@ namespace JazSharp.Spies
             _spy = spy;
         }
 
+        /// <summary>
+        /// Configures the spy to call-through to the original implementation after
+        /// recording the call.
+        /// </summary>
+        /// <returns>The spy.</returns>
         public SpyWithBehaviour CallThrough()
         {
             if (_spy.Key is Guid)
@@ -31,6 +39,11 @@ namespace JazSharp.Spies
             return new SpyWithBehaviour(_spy, behaviour);
         }
 
+        /// <summary>
+        /// Configures the spy to call-through to throw the given exception when
+        /// the spied-on method is called.
+        /// </summary>
+        /// <returns>The spy.</returns>
         public SpyWithBehaviour Throw(Exception exception)
         {
             _spy.Behaviours.Clear();
@@ -41,6 +54,11 @@ namespace JazSharp.Spies
             return new SpyWithBehaviour(_spy, behaviour);
         }
 
+        /// <summary>
+        /// Configures the spy to call-through to throw an exception of the given type
+        /// when the spied-on method is called.
+        /// </summary>
+        /// <returns>The spy.</returns>
         public SpyWithBehaviour Throw<TException>()
             where TException : Exception, new()
         {
@@ -52,6 +70,10 @@ namespace JazSharp.Spies
             return new SpyWithBehaviour(_spy, behaviour);
         }
 
+        /// <summary>
+        /// Configures the spy to return a specific value when called.
+        /// </summary>
+        /// <returns>The spy.</returns>
         public SpyWithBehaviour ReturnValue(object value)
         {
             _spy.Behaviours.Clear();
@@ -59,6 +81,11 @@ namespace JazSharp.Spies
             return new SpyWithBehaviour(_spy, behaviour);
         }
 
+        /// <summary>
+        /// Configures the spy to return each value in the given sequence for each
+        /// subsequent call to the spied on method.
+        /// </summary>
+        /// <returns>The spy.</returns>
         public SpyWithReturnValues ReturnValues(params object[] values)
         {
             _spy.Behaviours.Clear();
@@ -74,6 +101,12 @@ namespace JazSharp.Spies
             return new SpyWithReturnValues(_spy, behaviours);
         }
 
+        /// <summary>
+        /// Configures the spy to do nothing. This is also the default behaviour
+        /// for a new spy and results in a default value being returned if the
+        /// method is a function.
+        /// </summary>
+        /// <returns>The spy.</returns>
         public SpyWithBehaviour DoNothing()
         {
             _spy.Behaviours.Clear();
@@ -84,6 +117,14 @@ namespace JazSharp.Spies
             return new SpyWithBehaviour(_spy, behaviour);
         }
 
+        /// <summary>
+        /// Specifies parameter changes to make before executing the spy's configured
+        /// logic. The call log will still contain the original parameters but this
+        /// method can allow the test to change the parameters used before a call-through.
+        /// </summary>
+        /// <param name="parameterName">The name of the parameter to change.</param>
+        /// <param name="value">The new value to assign that parameter.</param>
+        /// <returns>The spy.</returns>
         public SpyAnd ChangeParameterBefore(string parameterName, object value)
         {
             var parameters = _spy.Method.GetParameters();

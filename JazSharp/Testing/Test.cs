@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace JazSharp.Testing
 {
@@ -107,16 +106,30 @@ namespace JazSharp.Testing
                     LineNumber);
         }
 
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
         public override bool Equals(object obj)
         {
-            return Equals(obj as Test);
+            return base.Equals(obj as Test);
         }
 
+        /// <summary>
+        /// Serves as the default hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
         public override int GetHashCode()
         {
             return FullName.GetHashCode();
         }
 
+        /// <summary>
+        /// Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <param name="other">An object to compare with this object.</param>
+        /// <returns>true if the current object is equal to the other parameter; otherwise, false.</returns>
         public bool Equals(Test other)
         {
             return

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Runtime.Loader;
 
 namespace JazSharp.Testing
 {
@@ -13,7 +12,6 @@ namespace JazSharp.Testing
     /// </summary>
     public sealed class TestCollection : IDisposable
     {
-        private bool _disposed;
         private readonly AssemblyContext _assemblyContext;
 
         /// <summary>
@@ -55,11 +53,6 @@ namespace JazSharp.Testing
         /// </summary>
         public void Dispose()
         {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException(typeof(TestCollection).Name);
-            }
-
             //TODO: Unload assembly context here when supported
         }
 

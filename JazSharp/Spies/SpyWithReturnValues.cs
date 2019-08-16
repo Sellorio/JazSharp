@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace JazSharp.Spies
 {
+    /// <summary>
+    /// An intermediary object used when defining the behaviour of a spy.
+    /// </summary>
     public class SpyWithReturnValues : ISpy
     {
         private readonly Spy _spy;
@@ -24,7 +27,7 @@ namespace JazSharp.Spies
 
         /// <summary>
         /// Configures the spy to modify the parameter values for ref or out parameters after
-        /// after the main logic of the spy is complete. Use this to specify return values for
+        /// the main logic of the spy is complete. Use this to specify return values for
         /// out and ref parameters.
         /// </summary>
         /// <param name="parameterName">The name of the parameter to set.</param>

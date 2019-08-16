@@ -170,6 +170,13 @@ namespace JazSharp.Reflection
                     var parameterCount = isStatic ? calledMethod.Parameters.Count : calledMethod.Parameters.Count + 1;
                     var entryMethodName = (isFunc ? "Func" : "Action") + parameterCount;
                     var entryMethod = typeof(SpyEntryPoints).GetMethod(entryMethodName, BindingFlags.Static | BindingFlags.Public);
+
+                    // method has more parameters than is supported by the current set of spy entry point methods
+                    if (entryMethod == null)
+                    {
+                        return null;
+                    }
+
                     var spyMethod = method.Module.ImportReference(entryMethod);
                     var genericMethod = new GenericInstanceMethod(spyMethod);
 

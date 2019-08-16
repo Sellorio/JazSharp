@@ -2,8 +2,12 @@
 
 namespace JazSharp.SpyLogic
 {
+    /// <summary>
+    /// Do not use this class. This class is only present to enable spies to work.
+    /// </summary>
     public static class SpyEntryPoints
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public static void Action0(MethodBase originalMethod)
         {
             SpyExecutionHelper.HandleCall(new object[0], originalMethod);
@@ -93,5 +97,6 @@ namespace JazSharp.SpyLogic
         {
             return (TR)SpyExecutionHelper.HandleCall(new object[] { p1, p2, p3, p4, p5, p6, p7, p8 }, originalMethod);
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
