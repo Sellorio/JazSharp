@@ -10,22 +10,26 @@
 - - - [Describes (test scopes)](#describes)
 - - - [Its (tests)](#its)
 - - - [BeforeEach and AfterEach](#beforeAfterEach)
+- - - [Excluding and focusing](#excludingAndFocusing)
 - - [Spying](#spying)
 - - - [What are spies?](#whatAreSpies)
 - - - [Behaviours](#behaviours)
 - - - [Sequences and Quantifiers](#sequences)
 - - - [Properties](#propertySpies)
+- - - [Create Spy](#createSpy)
+- - - [Calls](#calls)
 - - - [Limitations](#spyLimits)
 - - [Expectations (asserts)](#expects)
 - - - [Spy Expectations](#spyExpects)
 - - - [Call Expectations](#callExpects)
 - - - [Value Expectations](#valueExpects)
+- - - [Matchers](#matchers)
 - [Developer Guide](#developerGuide)
 - - [Build and run](#buildAndRun)
 - - [Map](#devMap)
 
-## Introduction
 <a id="intro"></a>
+## Introduction
 
 JazSharp is heavily inspired by Jasmine - the JavaScript unit testing framework. Angular developers
 will be very familiar with it since that is the unit testing framework used in a CLI created default
@@ -49,21 +53,21 @@ The syntax used to define test methods is also very different from other .Net te
 test names (or descriptions in the case of JazSharp) to read more clearly both to technical and non-technical
 persons.
 
-## User Guide
 <a id="userGuide"></a>
+## User Guide
 
-### Installation
 <a id="installation"></a>
+### Installation
 
 To start using JazSharp, all you have to do is install the `JazSharp` and `JazSharp.TestAdapter` nuget packages
 from nuget.org. The former is the core of the framework and the latter enables the framework to work with
 Visual Studio\'s Test Explorer as well as allowing tests to be executed by calling `dotnet test`.
 
-### Creating tests
 <a id="creatingTests"></a>
+### Creating tests
 
-#### Creating the test class
 <a id="testClass"></a>
+#### Creating the test class
 
 A test class in JazSharp is any class that inherits from `JazSharp.Spec`. The class does not need to be public.
 Unlike the common practise in JavaScript (when using Jasmine), it is recommended to place test classes in a
@@ -80,8 +84,8 @@ class FooSpec : Spec
 }
 ```
 
-#### Describes (test scopes)
 <a id="describes"></a>
+#### Describes (test scopes)
 
 All tests need to be grouped into one or more levels of Describes. The first Describe should almost always be
 used to state which class is being tested.
@@ -150,8 +154,8 @@ class FooSpec : Spec
 }
 ```
 
-#### Its (tests)
 <a id="its"></a>
+#### Its (tests)
 
 Now that you\'ve specified the scopes for the class, method and (optionally) scenarios
 for your test, it is time to start defining the test itself. This is done by using the
@@ -181,8 +185,8 @@ The above test will yield the following test description:
 
 `Foo Bar should initialize the flux capacitor.`
 
-#### BeforeEach and AfterEach
 <a id="beforeAfterEach"></a>
+#### BeforeEach and AfterEach
 
 JazSharp allows you to specify logic that will execute before and after each test. This
 logic is scoped to the Describe in which it is defined. See the below code for an illustration
@@ -230,18 +234,43 @@ Expectations (JazSharp's equivalent of Asserts - covered in a future section) ca
 specified in Before and After Each blocks. This can allow you to have expectations shared
 among multiple tests.
 
-### Spying
-<a id="spying"></a>
+<a id="excludingAndFocusing"></a>
+#### Excluding and focusing
 
-#### What are spies
+Sometimes there are tests cannot be safely re-run, are intentionally broken or are simply
+not relevant to pending work. In this case, it may be desirable to exclude those tests.
+Excluding is a simple matter of prefixing a `Describe` or `It` call with an "x". `xDescribe`
+and `xIt` result in a test being listed but running unit tests will result in a skipped
+status.
+
+There may be other times, such as when working in a specific area or updating specific unit
+tests where explicity focusing those tests may be convenient. While the Test Explorer does
+make running specific tests easy, it is also possible to "focus" tests in JazSharp. Tests can
+be focused by adding an "f" prefix to a `Describe` or `It` call. If any tests are focused,
+only focused tests will be executed.
+
+<a id="output"></a>
+#### Custom Output
+
+A test can add to the output log for a test by writing to the output `StringBuilder` in
+the current test context:
+
+```
+Jaz.CurrentTest.Output.AppendLine("This will appear in the test output.");
+```
+
+<a id="spying"></a>
+### Spying
+
 <a id="whatAreSpies"></a>
+#### What are spies
 
 Spies are similar to mocks except that they are applied on a per-method basis. A spy is an
 alternative implementation of a method which records calls made to the method and allows the
 test to specify alternative behaviours of the methods.
 
-#### Behaviours
 <a id="behaviours"></a>
+#### Behaviours
 
 You can spy on a method by using the `Jaz.SpyOn` method. Once spied on, a method will not
 get executed. If the method is a function, the default value will be returned. If the method
@@ -342,8 +371,8 @@ var result = int.Parse("5", out var parsedValue); // result is false, parsedValu
 `DoNothing` behaves the same as a default spy. The method exists solely for the purpose
 of calling `ThenChangeParameter`.
 
-#### Sequences and Quantifiers
 <a id="sequences"></a>
+#### Sequences and Quantifiers
 
 Spy behaviours can also be defined in a sequence. You got a taste for this when using
 `ReturnValues`. The following code:
@@ -387,8 +416,8 @@ The available quantifiers are:
 - `Times(x)`: the behaviour executes a given number of times.
 - `Forever()`: the behaviour executes forever.
 
-#### Properties
 <a id="propertySpies"></a>
+#### Properties
 
 In addition to spying on methods, you can also spy on properties. The following
 will create a spy on the Get and/or Set of methods of a property.
@@ -413,12 +442,35 @@ If the property does not have a Get method or it does not have a Set method then
 
 ```
 var array = new int[0];
-var propertySpy =
-    Jaz.SpyOnProperty(array, nameof(array.Length)); // propertySpy.Setter is null
+var propertySpy = Jaz.SpyOnProperty(array, nameof(array.Length)); // propertySpy.Setter is null
 ```
 
-#### Limitations
+<a id="createSpy"></a>
+#### Create Spy
+
+There are times where a spy in the form of a delegate is needed. These can be created
+by calling the provided `Jaz.CreateSpy` and `Jaz.CreateSpyFunc` methods. These are
+useful for testing events and delegates passed in as parameters.
+
+```
+var button = new Button();
+button.Click += Jaz.CreateSpy<object, EventArgs>(out var spy);
+```
+
+```
+var list = new List<int>();
+list.Where(Jaz.CreateSpyFunc<int, boolean>(out var spy));
+
+<a id="calls"></a>
+#### Calls
+
+The `Calls` property that is available on the Spy object allows the test to retrieve information
+about each call to the spied on method. A case where this data is needed would be if the method
+being tested passes in a callback to another method. You can then get the callback from
+`Calls[i].Arguments[j]` and then test the behaviour of that callback.
+
 <a id="spyLimits"></a>
+#### Limitations
 
 There are a few limitations on which methods can be spied on. These limitations include:
 
@@ -458,7 +510,7 @@ public void Foo<TBar>(TBar bar)
 }
 ```
 
-The workaround for this last limitation is to specify the `class` constraint on any generic
+The workaround for this limitation is to specify the `class` constraint on any generic
 parameters you know will be class types.
 
 ```
@@ -469,11 +521,11 @@ public void Foo<TBar>(TBar bar)
 }
 ```
 
-- Calls with more than 8 parameters
+- Calls with more than 16 parameters
 
 Long story short, each parameter count needs to be explicitly handled by the framework and
-at this time only 0 to 8 parameters are implemented. This may be extended later to support
-more.
+at this time only 0 to 16 parameters are implemented. This may be extended later to support
+methods with more than parameters.
 
 - Executing tests in Release mode
 
@@ -486,8 +538,8 @@ method calls have been tested but other, more obscure scenarios may have been mi
 changes are low but if you encounter an `InvalidProgramException` or other issue then
 please report it.
 
-### Expectations (asserts)
 <a id="expects"></a>
+### Expectations (asserts)
 
 JazSharp provides a sizable set of methods that can be used to check if the test was successful
 or not. In xUnit, NUnit and MSTest this is called an Assert. In Jasmine and JazSharp this is
@@ -508,8 +560,8 @@ Expect(spy).Not.ToHaveBeenCalled(); // fails
 The message in the `JazExpectationException` is different based on whether or not the check
 was inverted.
 
-#### Spy Expectations
 <a id="spyExpects"></a>
+#### Spy Expectations
 
 One of the three supported targets for an expectation is a spy. Spies can be checked in the
 following ways:
@@ -544,8 +596,8 @@ value.Split(new[] { ';' });
 Expect(spy).ToHaveBeenCalledWith(new[] { ';' }); // passes
 ```
 
-#### Call Expectations
 <a id="callExpects"></a>
+#### Call Expectations
 
 A method call be wrapped in `Expect` in order to allow an expected exception throw to be
 caught. This exception can be be checked by calling `ToThrow`.
@@ -565,8 +617,8 @@ Expect(() => throw new InvalidOperationException()).ToThrow<Exception>(); // fai
 Note: even if `ToThrow` is not called, the original exception will be caught and thus
 suppressed so only use a Call Expectation when checking for an expected exception.
 
-#### Value Expectations
 <a id="valueExpects"></a>
+#### Value Expectations
 
 This is where the bulk of the expectation logic lies. The following checks are provided:
 
@@ -672,6 +724,9 @@ Similar to `ToEquals` except that contains only requires x to be a subset of the
 items and properties in the value. This is recursive so if the items in the list
 are objects, the x item only needs to contain a subset of the properties.
 
+There is also an overload for `ToContain` that checks if a string value contains the
+given substring.
+
 ```
 Expect(new[] { "a", "b", "c" }).ToContain(new[] { "c", "b" }); // passes
 Expect("abc").ToContain("bc"); // passes
@@ -679,13 +734,32 @@ Expect("abc").ToContain("cb"); // fails
 Expect(new { x = 1, y = 2, z = 3 }).ToContain(new { y = 2 }); // passes
 ```
 
-## Developer Guide
+<a id="matchers"></a>
+#### Matchers
+
+`ToEqual` and `ToContain` support a set of matchers which can be used in place of
+values when doing a comparison. The available matchers are:
+
+- `Jaz.Any()`: matches on anything except null.
+- `Jaz.AnyOrNull()`: matches on absolutely anything, including null.
+- `Jaz.Any<T>()`: matches on any value that is of the given type or inherits from
+the given type.
+- `Jaz.AnyOrNull<T>()`: matches on any value that is of the given type, inherits
+from the given type or is null.
+- `Jaz.InstanceOf<T>()`: matches on any value that is of type T. Inheriting types,
+and null values are not matched.
+
+```
+Expect(foo).ToEqual(new { x = Jaz.Any&lt;int&gt;() });
+```
+
 <a id="developerGuide"></a>
+## Developer Guide
 
 You can clone the repository using this link: https://github.com/Sellorio/JazSharp.git
 
-### Build and run
 <a id="buildAndRun"></a>
+### Build and run
 
 Simply open the JazSharp solution in the root of the repository and build it.
 
@@ -693,8 +767,8 @@ Once built, Visual Studio will automatically pick up the Test Adapter. At that
 point you will be able to execute the automated tests contained in the
 JazSharp.Tests project.
 
-### Map
 <a id="devMap"></a>
+### Map
 
 Comming soon: a description of the areas of the source code to help interested
 parties navigate and understand the code and how it works.

@@ -1,6 +1,8 @@
 ﻿using JazSharp.SpyLogic.Behaviour;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 
 namespace JazSharp.Spies
 {
@@ -18,6 +20,11 @@ namespace JazSharp.Spies
         public SpyThen Then => new SpyThen(_spy);
 
         Spy ISpy.Spy => _spy;
+
+        /// <summary>
+        /// The calls that have been made to the spy at this point in time.
+        /// </summary>
+        public IReadOnlyList<SpyCall> Calls => ImmutableArray.CreateRange(_spy.CallLog.Select(x => new SpyCall(x)));
 
         internal SpyWithReturnValues(Spy spy, List<SpyBehaviourBase> returnValuesBehaviours)
         {
