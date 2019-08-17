@@ -12,7 +12,8 @@
 - - - [BeforeEach and AfterEach](#beforeAfterEach)
 - - [Spying](#spying)
 - - - [What are spies?](#whatAreSpies)
-- - - [Methods](#methodSpies)
+- - - [Behaviours](#behaviours)
+- - - [Sequences and Quantifiers](#sequences)
 - - - [Properties](#propertySpies)
 - - - [Limitations](#spyLimits)
 - - [Expectations (asserts)](#expects)
@@ -73,9 +74,9 @@ An empty test class would look something like this:
 ```
 class FooSpec : Spec
 {
-	public FooSpec()
-	{
-	}
+    public FooSpec()
+    {
+    }
 }
 ```
 
@@ -88,12 +89,12 @@ used to state which class is being tested.
 ```
 class FooSpec : Spec
 {
-	public FooSpec()
-	{
-		Describe<Foo>(() =>
-		{
-		});
-	}
+    public FooSpec()
+    {
+        Describe<Foo>(() =>
+        {
+        });
+    }
 }
 ```
 
@@ -102,12 +103,12 @@ Note: for static types, you will need to revert to specifying the name manually.
 ```
 class StaticFooSpec : Spec
 {
-	public StaticFooSpec()
-	{
-		Describe(nameof(StaticFoo), () =>
-		{
-		});
-	}
+    public StaticFooSpec()
+    {
+        Describe(nameof(StaticFoo), () =>
+        {
+        });
+    }
 }
 ```
 
@@ -116,15 +117,15 @@ The next Describe will usually be used to specify the method being tested.
 ```
 class FooSpec : Spec
 {
-	public FooSpec()
-	{
-		Describe<Foo>(() =>
-		{
-			Describe(nameof(Foo.Bar), () =>
-			{
-			});
-		});
-	}
+    public FooSpec()
+    {
+        Describe<Foo>(() =>
+        {
+            Describe(nameof(Foo.Bar), () =>
+            {
+            });
+        });
+    }
 }
 ```
 
@@ -134,18 +135,18 @@ describes are used to group tests together by a particular scenario.
 ```
 class FooSpec : Spec
 {
-	public FooSpec()
-	{
-		Describe<Foo>(() =>
-		{
-			Describe(nameof(Foo.Bar), () =>
-			{
-				Describe("when x is y", () =>
-				{
-				});
-			});
-		});
-	}
+    public FooSpec()
+    {
+        Describe<Foo>(() =>
+        {
+            Describe(nameof(Foo.Bar), () =>
+            {
+                Describe("when x is y", () =>
+                {
+                });
+            });
+        });
+    }
 }
 ```
 
@@ -160,19 +161,19 @@ readable test descriptions.
 ```
 class FooSpec : Spec
 {
-	public FooSpec()
-	{
-		Describe<Foo>(() =>
-		{
-			Describe(nameof(Foo.Bar), () =>
-			{
-				It("should initialize the flux capacitor.", () =>
-				{
-					... // test logic here
-				});
-			});
-		});
-	}
+    public FooSpec()
+    {
+        Describe<Foo>(() =>
+        {
+            Describe(nameof(Foo.Bar), () =>
+            {
+                It("should initialize the flux capacitor.", () =>
+                {
+                    ... // test logic here
+                });
+            });
+        });
+    }
 }
 ```
 
@@ -190,34 +191,34 @@ of how the scoping works.
 ```
 class FooSpec : Spec
 {
-	public FooSpec()
-	{
-		Describe<Foo>(() =>
-		{
-			BeforeEach(() =>		// before each 1
-			{
-				...
-			});
+    public FooSpec()
+    {
+        Describe<Foo>(() =>
+        {
+            BeforeEach(() =>        // before each 1
+            {
+                ...
+            });
 
-			Describe(nameof(Foo.Bar), () =>
-			{
-				It("should initialize the flux capacitor.", () => 
-				{
-					// before each 1 will be run
-					// before each 2 will not be run
-					... // test logic here
-				});
-			});
+            Describe(nameof(Foo.Bar), () =>
+            {
+                It("should initialize the flux capacitor.", () => 
+                {
+                    // before each 1 will be run
+                    // before each 2 will not be run
+                    ... // test logic here
+                });
+            });
 
-			Describe("something else", () =>
-			{
-				BeforeEach(() =>	// before each 2
-				{
-					...
-				});
-			});
-		});
-	}
+            Describe("something else", () =>
+            {
+                BeforeEach(() =>    // before each 2
+                {
+                    ...
+                });
+            });
+        });
+    }
 }
 ```
 
@@ -232,27 +233,468 @@ among multiple tests.
 ### Spying
 <a id="spying"></a>
 
-
 #### What are spies
 <a id="whatAreSpies"></a>
 
-#### Methods
-<a id="methodSpies"></a>
+Spies are similar to mocks except that they are applied on a per-method basis. A spy is an
+alternative implementation of a method which records calls made to the method and allows the
+test to specify alternative behaviours of the methods.
+
+#### Behaviours
+<a id="behaviours"></a>
+
+You can spy on a method by using the `Jaz.SpyOn` method. Once spied on, a method will not
+get executed. If the method is a function, the default value will be returned. If the method
+has Out parameters, these too will be defaulted.
+
+```
+var value = "test";
+var spy = Jaz.SpyOn(value, nameof(value.ToString));
+var result = value.ToString(); // result is null
+```
+
+You can also spy on static methods.
+
+```
+var spy = Jaz.SpyOn(typeof(string), nameof(string.IsNullOrEmpty));
+var result = string.IsNullOrEmpty(null); // result is false
+```
+
+If a method has multiple overrides, you can specify the parameters of the overload you want
+to spy on.
+
+```
+var spy = Jaz.SpyOn(typeof(int), nameof(int.Parse), new[] { typeof(string) });
+var result = int.Parse("1"); // result is 0
+```
+
+To keep the spy and execute the method's original implementation, use the `CallThrough` method.
+
+```
+var value = "test";
+var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.CallThrough();
+var result = value.ToString(); // result is "test"
+```
+
+To instead return another value from the function, use the `ReturnValue` method.
+
+```
+var value = "test";
+var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.ReturnValue("other");
+var result = value.ToString(); // result is "other"
+```
+
+You can also specify a sequence of return values that each subsequent call to the method
+will return. Once the sequence runs out, a `JazSpyException` will be thrown.
+
+```
+var value = "test";
+var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.ReturnValues("other", "value");
+var result = value.ToString(); // result is "other"
+result = value.ToString(); // result is "value"
+value.ToString(); // throws exception
+```
+
+Alternatively, you can specify that the method should throw an exception. You can specify
+the exception either by passing in the instance:
+
+```
+var value = "test";
+var exception = new InvalidOperationException();
+var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.Throw(exception);
+value.ToString(); // throws invalid operation exception
+```
+
+or by specifying an exception type:
+
+```
+var value = "test";
+var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.Throw<InvalidOperationException>();
+value.ToString(); // throws invalid operation exception
+```
+
+You can also change the parameters used for a call through by using `ChangeParameterBefore`
+one or more times.
+
+```
+var spy =
+    Jaz.SpyOn(typeof(int), nameof(int.Parse), new[] { typeof(string) })
+        .And
+        .ChangeParameterBefore("s", "3")
+        .CallThrough();
+
+var result = int.Parse("5"); // result is 3
+```
+
+Similarly, you can set the value of an Out or Ref parameter by using `ThenChangeParameter`
+one or more times.
+
+```
+var spy =
+    Jaz.SpyOn(typeof(int), nameof(int.Parse), new[] { typeof(string) })
+        .And
+        .DoNothing()
+        .ThenChangeParameter("result", 9);
+
+var result = int.Parse("5", out var parsedValue); // result is false, parsedValue is 9
+```
+
+`DoNothing` behaves the same as a default spy. The method exists solely for the purpose
+of calling `ThenChangeParameter`.
+
+#### Sequences and Quantifiers
+<a id="sequences"></a>
+
+Spy behaviours can also be defined in a sequence. You got a taste for this when using
+`ReturnValues`. The following code:
+
+```
+var value = "test";
+var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.ReturnValues("a", "b", "c");
+```
+
+could also be written as:
+
+```
+var value = "test";
+var spy =
+    Jaz.SpyOn(value, nameof(value.ToString))
+        .And.ReturnValue("a")
+        .Then.ReturnValue("b")
+        .Then.ReturnValue("c");
+```
+
+All of the spy behaviours can be specified in a sequence.
+
+In addition to being able to specify behaviours in a sequence, you can also specify
+how many times each behaviour is used before moving on to the next behaviour.
+
+The above code could also be extended out to the following code:
+
+```
+var value = "test";
+var spy =
+    Jaz.SpyOn(value, nameof(value.ToString))
+        .And.ReturnValue("a").Once()
+        .Then.ReturnValue("b").Once()
+        .Then.ReturnValue("c").Once();
+```
+
+The available quantifiers are:
+
+- `Once()`: the behaviour executes once.
+- `Twice()`: the behaviour executes twice.
+- `Times(x)`: the behaviour executes a given number of times.
+- `Forever()`: the behaviour executes forever.
 
 #### Properties
 <a id="propertySpies"></a>
 
+In addition to spying on methods, you can also spy on properties. The following
+will create a spy on the Get and/or Set of methods of a property.
+
+```
+var array = new int[0];
+var propertySpy = Jaz.SpyOnProperty(array, nameof(array.Length));
+```
+
+The spies for the Get and Set methods can be configured like method spies:
+
+```
+var array = new int[0];
+var propertySpy =
+    Jaz.SpyOnProperty(array, nameof(array.Length))
+        .Getter.And.ReturnValue(5);
+var length = array.Length; // length is 5
+```
+
+If the property does not have a Get method or it does not have a Set method then
+`Getter` or `Setter` will be null respectively.
+
+```
+var array = new int[0];
+var propertySpy =
+    Jaz.SpyOnProperty(array, nameof(array.Length)); // propertySpy.Setter is null
+```
+
 #### Limitations
 <a id="spyLimits"></a>
+
+There are a few limitations on which methods can be spied on. These limitations include:
+
+- calls to base implementations of an override.
+
+```
+public override void ToString()
+{
+    return base.ToString(); // cannot be spied on
+}
+```
+
+- Calls to value type instance methods
+
+This limitation comes from the fact that the `this` parameter receives special treatment
+for structs - it is passed by reference. This is done by the .net compiler so that methods
+called on a struct can change the struct's state. If this wasn't done, any changes made in
+a method would only affect a copy of the struct and thus changes would be lost.
+
+This limitation may be removed in a future version of JazSharp.
+
+```
+var now = DateTime.Now;
+now.ToString(); // cannot by spied on
+```
+
+- Calls to possible value type instance methods
+
+An extension to the previous limitation, if you have a generic parameter which does not have
+a `class` constraint on it, the .net compiler will pass the `this` parameter by reference
+to make sure that if the type parameter is a struct, it will execute correctly.
+
+```
+public void Foo<TBar>(TBar bar)
+{
+    bar.ToString(); // cannot be spied on
+}
+```
+
+The workaround for this last limitation is to specify the `class` constraint on any generic
+parameters you know will be class types.
+
+```
+public void Foo<TBar>(TBar bar)
+    where TBar : class
+{
+    bar.ToString(); // CAN be spied on
+}
+```
+
+- Calls with more than 8 parameters
+
+Long story short, each parameter count needs to be explicitly handled by the framework and
+at this time only 0 to 8 parameters are implemented. This may be extended later to support
+more.
+
+- Executing tests in Release mode
+
+There are outstanding issues when running JazSharp tests in a Release configuration. Only a
+handful of scenarios are affected by this issue and these should be resolved in a future
+minor version.
+
+These are the known limitations of the current version of JazSharp. Many different kinds of
+method calls have been tested but other, more obscure scenarios may have been missed. The
+changes are low but if you encounter an `InvalidProgramException` or other issue then
+please report it.
 
 ### Expectations (asserts)
 <a id="expects"></a>
 
+JazSharp provides a sizable set of methods that can be used to check if the test was successful
+or not. In xUnit, NUnit and MSTest this is called an Assert. In Jasmine and JazSharp this is
+instead referred to as an Expect or expectation.
+
+If an expectation fails, a `JazExpectationException` is thrown with a descriptive message. This
+exception should not be caught since it is used when detecting failed tests.
+
+All expectations can be reversed by using `Not` to reverse the check. For example:
+
+```
+var spy = Jaz.SpyOnProperty(typeof(DateTime), nameof(DateTime.Now)).Getter;
+var now = DateTime.Now;
+Expect(spy).ToHaveBeenCalled(); // passes
+Expect(spy).Not.ToHaveBeenCalled(); // fails
+```
+
+The message in the `JazExpectationException` is different based on whether or not the check
+was inverted.
+
+#### Spy Expectations
+<a id="spyExpects"></a>
+
+One of the three supported targets for an expectation is a spy. Spies can be checked in the
+following ways:
+
+- `ToHaveBeenCalled()`: checks whether or not a spied on method was called. Does not check
+parameters nor call count.
+
+```
+var spy = Jaz.SpyOnProperty(typeof(DateTime), nameof(DateTime.Now)).Getter;
+var now = DateTime.Now;
+Expect(spy).ToHaveBeenCalled(); // passes
+```
+
+- `ToHaveBeenCalledTimes(x)`: checks whether or not a spied on method was called an expected
+number of times.
+
+```
+var spy = Jaz.SpyOnProperty(typeof(DateTime), nameof(DateTime.Now)).Getter;
+var now = DateTime.Now;
+now = DateTime.Now;
+now = DateTime.Now;
+Expect(spy).ToHaveBeenCalledTimes(3); // passes
+```
+
+- `ToHaveBeenCalledWith(...)`: does a deep equality comparsion checking if the given set of
+parameters matched any of the method calls that were made to the method.
+
+```
+var value = "a;b;c";
+var spy = Jaz.SpyOn(value, nameof(string.Split), new[] { typeof(char[]) });
+value.Split(new[] { ';' });
+Expect(spy).ToHaveBeenCalledWith(new[] { ';' }); // passes
+```
+
+#### Call Expectations
+<a id="callExpects"></a>
+
+A method call be wrapped in `Expect` in order to allow an expected exception throw to be
+caught. This exception can be be checked by calling `ToThrow`.
+
+```
+var exception =
+    Expect(() => throw new InvalidOperationException())
+        .ToThrow<InvalidOperationException>(); // passes
+```
+
+`ToThrow` will fail if the exception inherits from the expected type:
+
+```
+Expect(() => throw new InvalidOperationException()).ToThrow<Exception>(); // fails
+```
+
+Note: even if `ToThrow` is not called, the original exception will be caught and thus
+suppressed so only use a Call Expectation when checking for an expected exception.
+
+#### Value Expectations
+<a id="valueExpects"></a>
+
+This is where the bulk of the expectation logic lies. The following checks are provided:
+
+- `ToEqual(x)`: performs a deep equality check comparing the two given values.
+
+```
+var value1 = new { x = 1, y = 2 };
+Expect(value1).ToEqual(new { x = 1, y = 2 }); // passes
+```
+
+- `ToBe(x)`: checks for an exact match between the two values.
+
+```
+Expect("abc").ToBe("abc"); // passes
+Expect(2).ToBe(2); // passes
+Expect(new object()).ToBe(new object()); // fails - different reference
+```
+
+- `ToBeTrue()`: checks that the value is exactly `true`.
+
+```
+Expect(true).ToBeTrue(); // passes
+Expect("true").ToBeTrue(); // fails
+Expect(false).ToBeTrue(); // fails
+```
+
+- `ToBeFalse()`: checks that the value is exactly `false`.
+
+```
+Expect(false).ToBeFalse(); // passes
+Expect("false").ToBeFalse(); // fails
+Expect(true).ToBeFalse(); // fails
+```
+
+- `ToBeDefault()`: checks that the value is exactly `default`.
+
+```
+Expect(0).ToBeDefault(); // passes;
+Expect(false).ToBeDefault(); // passes;
+Expect((string)null).ToBeDefault(); // passes;
+```
+
+- `ToBeEmpty()`: checks that the value is an empty string or enumerable.
+
+```
+Expect("").ToBeEmpty(); // passes
+Expect(new int[0]); // passes
+```
+
+- `ToBeBetween(x, y)`: checks that the value is between x and y.
+
+```
+Expect(5).ToBeBetween(3, 7); // passes
+Expect(new DateTime(2010, 10, 10)).ToBeBetween(new DateTime(2009, 9, 9), new DateTime(2011, 11, 11));
+```
+
+This will work for any value that implements `IComparable<T>`.
+
+- `ToBeLessThan(x)`: checks that the value is less than x.
+
+```
+Expect(5).ToBeLessThan(6); // passes
+```
+
+This will work for any value that implements `IComparable<T>`.
+
+- `ToBeGreaterThan(x)`: checks that the value is greater than x.
+
+```
+Expect(5).ToBeGreaterThan(4); // passes
+```
+
+This will work for any value that implements `IComparable<T>`.
+
+- `ToBeLessThanOrEqualTo(x)`: checks that the value is less than or equal to x.
+
+```
+Expect(5).ToBeLessThanOrEqualTo(6); // passes
+Expect(5).ToBeLessThanOrEqualTo(5); // passes
+```
+
+This will work for any value that implements `IComparable<T>`.
+
+- `ToBeGreaterThanOrEqualTo(x)`: checks that the value is greater than or equal to x.
+
+```
+Expect(5).ToBeLessThanOrEqualTo(4); // passes
+Expect(5).ToBeLessThanOrEqualTo(5); // passes
+```
+
+This will work for any value that implements `IComparable<T>`.
+
+- `ToMatch(x)`: checks that a string value matches the given Regular Expression.
+
+```
+Expect("a1122").ToMatch("^a[12]{4}$"); // passes
+Expect("A1122").ToMatch(new Regex("^a[12]{4}$", RegexOptions.IgnoreCase)); // passes
+```
+
+- `ToContain(x)`: checks that the value contains the given subset of data.
+
+Similar to `ToEquals` except that contains only requires x to be a subset of the
+items and properties in the value. This is recursive so if the items in the list
+are objects, the x item only needs to contain a subset of the properties.
+
+```
+Expect(new[] { "a", "b", "c" }).ToContain(new[] { "c", "b" }); // passes
+Expect("abc").ToContain("bc"); // passes
+Expect("abc").ToContain("cb"); // fails
+Expect(new { x = 1, y = 2, z = 3 }).ToContain(new { y = 2 }); // passes
+```
+
 ## Developer Guide
 <a id="developerGuide"></a>
+
+You can clone the repository using this link: https://github.com/Sellorio/JazSharp.git
 
 ### Build and run
 <a id="buildAndRun"></a>
 
+Simply open the JazSharp solution in the root of the repository and build it.
+
+Once built, Visual Studio will automatically pick up the Test Adapter. At that
+point you will be able to execute the automated tests contained in the
+JazSharp.Tests project.
+
 ### Map
 <a id="devMap"></a>
+
+Comming soon: a description of the areas of the source code to help interested
+parties navigate and understand the code and how it works.
