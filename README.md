@@ -4,29 +4,29 @@
 
 - [Introduction](#intro)
 - [User Guide](#userGuide)
-- - [Installation](#installation)
-- - [Creating tests](#creatingTests)
-- - - [Creating the test class](#testClass)
-- - - [Describes (test scopes)](#describes)
-- - - [Its (tests)](#its)
-- - - [BeforeEach and AfterEach](#beforeAfterEach)
-- - - [Excluding and focusing](#excludingAndFocusing)
-- - [Spying](#spying)
-- - - [What are spies?](#whatAreSpies)
-- - - [Behaviours](#behaviours)
-- - - [Sequences and Quantifiers](#sequences)
-- - - [Properties](#propertySpies)
-- - - [Create Spy](#createSpy)
-- - - [Calls](#calls)
-- - - [Limitations](#spyLimits)
-- - [Expectations (asserts)](#expects)
-- - - [Spy Expectations](#spyExpects)
-- - - [Call Expectations](#callExpects)
-- - - [Value Expectations](#valueExpects)
-- - - [Matchers](#matchers)
+  - [Installation](#installation)
+  - [Creating tests](#creatingTests)
+    - [Creating the test class](#testClass)
+    - [Describes (test scopes)](#describes)
+    - [Its (tests)](#its)
+    - [BeforeEach and AfterEach](#beforeAfterEach)
+    - [Excluding and focusing](#excludingAndFocusing)
+  - [Spying](#spying)
+    - [What are spies?](#whatAreSpies)
+    - [Behaviours](#behaviours)
+    - [Sequences and Quantifiers](#sequences)
+    - [Properties](#propertySpies)
+    - [Create Spy](#createSpy)
+    - [Calls](#calls)
+    - [Limitations](#spyLimits)
+  - [Expectations (asserts)](#expects)
+    - [Spy Expectations](#spyExpects)
+    - [Call Expectations](#callExpects)
+    - [Value Expectations](#valueExpects)
+    - [Matchers](#matchers)
 - [Developer Guide](#developerGuide)
-- - [Build and run](#buildAndRun)
-- - [Map](#devMap)
+  - [Build and run](#buildAndRun)
+  - [Map](#devMap)
 
 <a id="intro"></a>
 ## Introduction
@@ -75,7 +75,7 @@ dedicated unit test assembly (as is popular when unit testing in .Net).
 
 An empty test class would look something like this:
 
-```
+```C#
 class FooSpec : Spec
 {
     public FooSpec()
@@ -90,7 +90,7 @@ class FooSpec : Spec
 All tests need to be grouped into one or more levels of Describes. The first Describe should almost always be
 used to state which class is being tested.
 
-```
+```C#
 class FooSpec : Spec
 {
     public FooSpec()
@@ -104,7 +104,7 @@ class FooSpec : Spec
 
 Note: for static types, you will need to revert to specifying the name manually.
 
-```
+```C#
 class StaticFooSpec : Spec
 {
     public StaticFooSpec()
@@ -118,7 +118,7 @@ class StaticFooSpec : Spec
 
 The next Describe will usually be used to specify the method being tested.
 
-```
+```C#
 class FooSpec : Spec
 {
     public FooSpec()
@@ -136,7 +136,7 @@ class FooSpec : Spec
 At this point it is common to start specifying your tests but sometimes additional
 describes are used to group tests together by a particular scenario.
 
-```
+```C#
 class FooSpec : Spec
 {
     public FooSpec()
@@ -162,7 +162,7 @@ for your test, it is time to start defining the test itself. This is done by usi
 `It` methods. Each test's description should begin with "should" since this yields
 readable test descriptions.
 
-```
+```C#
 class FooSpec : Spec
 {
     public FooSpec()
@@ -192,7 +192,7 @@ JazSharp allows you to specify logic that will execute before and after each tes
 logic is scoped to the Describe in which it is defined. See the below code for an illustration
 of how the scoping works.
 
-```
+```C#
 class FooSpec : Spec
 {
     public FooSpec()
@@ -255,7 +255,7 @@ only focused tests will be executed.
 A test can add to the output log for a test by writing to the output `StringBuilder` in
 the current test context:
 
-```
+```C#
 Jaz.CurrentTest.Output.AppendLine("This will appear in the test output.");
 ```
 
@@ -276,7 +276,7 @@ You can spy on a method by using the `Jaz.SpyOn` method. Once spied on, a method
 get executed. If the method is a function, the default value will be returned. If the method
 has Out parameters, these too will be defaulted.
 
-```
+```C#
 var value = "test";
 var spy = Jaz.SpyOn(value, nameof(value.ToString));
 var result = value.ToString(); // result is null
@@ -284,7 +284,7 @@ var result = value.ToString(); // result is null
 
 You can also spy on static methods.
 
-```
+```C#
 var spy = Jaz.SpyOn(typeof(string), nameof(string.IsNullOrEmpty));
 var result = string.IsNullOrEmpty(null); // result is false
 ```
@@ -292,14 +292,14 @@ var result = string.IsNullOrEmpty(null); // result is false
 If a method has multiple overrides, you can specify the parameters of the overload you want
 to spy on.
 
-```
+```C#
 var spy = Jaz.SpyOn(typeof(int), nameof(int.Parse), new[] { typeof(string) });
 var result = int.Parse("1"); // result is 0
 ```
 
 To keep the spy and execute the method's original implementation, use the `CallThrough` method.
 
-```
+```C#
 var value = "test";
 var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.CallThrough();
 var result = value.ToString(); // result is "test"
@@ -307,7 +307,7 @@ var result = value.ToString(); // result is "test"
 
 To instead return another value from the function, use the `ReturnValue` method.
 
-```
+```C#
 var value = "test";
 var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.ReturnValue("other");
 var result = value.ToString(); // result is "other"
@@ -316,7 +316,7 @@ var result = value.ToString(); // result is "other"
 You can also specify a sequence of return values that each subsequent call to the method
 will return. Once the sequence runs out, a `JazSpyException` will be thrown.
 
-```
+```C#
 var value = "test";
 var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.ReturnValues("other", "value");
 var result = value.ToString(); // result is "other"
@@ -327,7 +327,7 @@ value.ToString(); // throws exception
 Alternatively, you can specify that the method should throw an exception. You can specify
 the exception either by passing in the instance:
 
-```
+```C#
 var value = "test";
 var exception = new InvalidOperationException();
 var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.Throw(exception);
@@ -336,7 +336,7 @@ value.ToString(); // throws invalid operation exception
 
 or by specifying an exception type:
 
-```
+```C#
 var value = "test";
 var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.Throw<InvalidOperationException>();
 value.ToString(); // throws invalid operation exception
@@ -345,7 +345,7 @@ value.ToString(); // throws invalid operation exception
 You can also change the parameters used for a call through by using `ChangeParameterBefore`
 one or more times.
 
-```
+```C#
 var spy =
     Jaz.SpyOn(typeof(int), nameof(int.Parse), new[] { typeof(string) })
         .And
@@ -358,7 +358,7 @@ var result = int.Parse("5"); // result is 3
 Similarly, you can set the value of an Out or Ref parameter by using `ThenChangeParameter`
 one or more times.
 
-```
+```C#
 var spy =
     Jaz.SpyOn(typeof(int), nameof(int.Parse), new[] { typeof(string) })
         .And
@@ -377,14 +377,14 @@ of calling `ThenChangeParameter`.
 Spy behaviours can also be defined in a sequence. You got a taste for this when using
 `ReturnValues`. The following code:
 
-```
+```C#
 var value = "test";
 var spy = Jaz.SpyOn(value, nameof(value.ToString)).And.ReturnValues("a", "b", "c");
 ```
 
 could also be written as:
 
-```
+```C#
 var value = "test";
 var spy =
     Jaz.SpyOn(value, nameof(value.ToString))
@@ -400,7 +400,7 @@ how many times each behaviour is used before moving on to the next behaviour.
 
 The above code could also be extended out to the following code:
 
-```
+```C#
 var value = "test";
 var spy =
     Jaz.SpyOn(value, nameof(value.ToString))
@@ -422,14 +422,14 @@ The available quantifiers are:
 In addition to spying on methods, you can also spy on properties. The following
 will create a spy on the Get and/or Set of methods of a property.
 
-```
+```C#
 var array = new int[0];
 var propertySpy = Jaz.SpyOnProperty(array, nameof(array.Length));
 ```
 
 The spies for the Get and Set methods can be configured like method spies:
 
-```
+```C#
 var array = new int[0];
 var propertySpy =
     Jaz.SpyOnProperty(array, nameof(array.Length))
@@ -440,7 +440,7 @@ var length = array.Length; // length is 5
 If the property does not have a Get method or it does not have a Set method then
 `Getter` or `Setter` will be null respectively.
 
-```
+```C#
 var array = new int[0];
 var propertySpy = Jaz.SpyOnProperty(array, nameof(array.Length)); // propertySpy.Setter is null
 ```
@@ -452,12 +452,12 @@ There are times where a spy in the form of a delegate is needed. These can be cr
 by calling the provided `Jaz.CreateSpy` and `Jaz.CreateSpyFunc` methods. These are
 useful for testing events and delegates passed in as parameters.
 
-```
+```C#
 var button = new Button();
 button.Click += Jaz.CreateSpy<object, EventArgs>(out var spy);
 ```
 
-```
+```C#
 var list = new List<int>();
 list.Where(Jaz.CreateSpyFunc<int, boolean>(out var spy));
 ```
@@ -477,7 +477,7 @@ There are a few limitations on which methods can be spied on. These limitations 
 
 - calls to base implementations of an override.
 
-```
+```C#
 public override void ToString()
 {
     return base.ToString(); // cannot be spied on
@@ -493,7 +493,7 @@ a method would only affect a copy of the struct and thus changes would be lost.
 
 This limitation may be removed in a future version of JazSharp.
 
-```
+```C#
 var now = DateTime.Now;
 now.ToString(); // cannot by spied on
 ```
@@ -504,7 +504,7 @@ An extension to the previous limitation, if you have a generic parameter which d
 a `class` constraint on it, the .net compiler will pass the `this` parameter by reference
 to make sure that if the type parameter is a struct, it will execute correctly.
 
-```
+```C#
 public void Foo<TBar>(TBar bar)
 {
     bar.ToString(); // cannot be spied on
@@ -514,7 +514,7 @@ public void Foo<TBar>(TBar bar)
 The workaround for this limitation is to specify the `class` constraint on any generic
 parameters you know will be class types.
 
-```
+```C#
 public void Foo<TBar>(TBar bar)
     where TBar : class
 {
@@ -551,7 +551,7 @@ exception should not be caught since it is used when detecting failed tests.
 
 All expectations can be reversed by using `Not` to reverse the check. For example:
 
-```
+```C#
 var spy = Jaz.SpyOnProperty(typeof(DateTime), nameof(DateTime.Now)).Getter;
 var now = DateTime.Now;
 Expect(spy).ToHaveBeenCalled(); // passes
@@ -570,7 +570,7 @@ following ways:
 - `ToHaveBeenCalled()`: checks whether or not a spied on method was called. Does not check
 parameters nor call count.
 
-```
+```C#
 var spy = Jaz.SpyOnProperty(typeof(DateTime), nameof(DateTime.Now)).Getter;
 var now = DateTime.Now;
 Expect(spy).ToHaveBeenCalled(); // passes
@@ -579,7 +579,7 @@ Expect(spy).ToHaveBeenCalled(); // passes
 - `ToHaveBeenCalledTimes(x)`: checks whether or not a spied on method was called an expected
 number of times.
 
-```
+```C#
 var spy = Jaz.SpyOnProperty(typeof(DateTime), nameof(DateTime.Now)).Getter;
 var now = DateTime.Now;
 now = DateTime.Now;
@@ -590,7 +590,7 @@ Expect(spy).ToHaveBeenCalledTimes(3); // passes
 - `ToHaveBeenCalledWith(...)`: does a deep equality comparsion checking if the given set of
 parameters matched any of the method calls that were made to the method.
 
-```
+```C#
 var value = "a;b;c";
 var spy = Jaz.SpyOn(value, nameof(string.Split), new[] { typeof(char[]) });
 value.Split(new[] { ';' });
@@ -603,7 +603,7 @@ Expect(spy).ToHaveBeenCalledWith(new[] { ';' }); // passes
 A method call be wrapped in `Expect` in order to allow an expected exception throw to be
 caught. This exception can be be checked by calling `ToThrow`.
 
-```
+```C#
 var exception =
     Expect(() => throw new InvalidOperationException())
         .ToThrow<InvalidOperationException>(); // passes
@@ -611,7 +611,7 @@ var exception =
 
 `ToThrow` will fail if the exception inherits from the expected type:
 
-```
+```C#
 Expect(() => throw new InvalidOperationException()).ToThrow<Exception>(); // fails
 ```
 
@@ -625,14 +625,14 @@ This is where the bulk of the expectation logic lies. The following checks are p
 
 - `ToEqual(x)`: performs a deep equality check comparing the two given values.
 
-```
+```C#
 var value1 = new { x = 1, y = 2 };
 Expect(value1).ToEqual(new { x = 1, y = 2 }); // passes
 ```
 
 - `ToBe(x)`: checks for an exact match between the two values.
 
-```
+```C#
 Expect("abc").ToBe("abc"); // passes
 Expect(2).ToBe(2); // passes
 Expect(new object()).ToBe(new object()); // fails - different reference
@@ -640,7 +640,7 @@ Expect(new object()).ToBe(new object()); // fails - different reference
 
 - `ToBeTrue()`: checks that the value is exactly `true`.
 
-```
+```C#
 Expect(true).ToBeTrue(); // passes
 Expect("true").ToBeTrue(); // fails
 Expect(false).ToBeTrue(); // fails
@@ -648,7 +648,7 @@ Expect(false).ToBeTrue(); // fails
 
 - `ToBeFalse()`: checks that the value is exactly `false`.
 
-```
+```C#
 Expect(false).ToBeFalse(); // passes
 Expect("false").ToBeFalse(); // fails
 Expect(true).ToBeFalse(); // fails
@@ -656,7 +656,7 @@ Expect(true).ToBeFalse(); // fails
 
 - `ToBeDefault()`: checks that the value is exactly `default`.
 
-```
+```C#
 Expect(0).ToBeDefault(); // passes;
 Expect(false).ToBeDefault(); // passes;
 Expect((string)null).ToBeDefault(); // passes;
@@ -664,14 +664,14 @@ Expect((string)null).ToBeDefault(); // passes;
 
 - `ToBeEmpty()`: checks that the value is an empty string or enumerable.
 
-```
+```C#
 Expect("").ToBeEmpty(); // passes
 Expect(new int[0]); // passes
 ```
 
 - `ToBeBetween(x, y)`: checks that the value is between x and y.
 
-```
+```C#
 Expect(5).ToBeBetween(3, 7); // passes
 Expect(new DateTime(2010, 10, 10)).ToBeBetween(new DateTime(2009, 9, 9), new DateTime(2011, 11, 11));
 ```
@@ -680,7 +680,7 @@ This will work for any value that implements `IComparable<T>`.
 
 - `ToBeLessThan(x)`: checks that the value is less than x.
 
-```
+```C#
 Expect(5).ToBeLessThan(6); // passes
 ```
 
@@ -688,7 +688,7 @@ This will work for any value that implements `IComparable<T>`.
 
 - `ToBeGreaterThan(x)`: checks that the value is greater than x.
 
-```
+```C#
 Expect(5).ToBeGreaterThan(4); // passes
 ```
 
@@ -696,7 +696,7 @@ This will work for any value that implements `IComparable<T>`.
 
 - `ToBeLessThanOrEqualTo(x)`: checks that the value is less than or equal to x.
 
-```
+```C#
 Expect(5).ToBeLessThanOrEqualTo(6); // passes
 Expect(5).ToBeLessThanOrEqualTo(5); // passes
 ```
@@ -705,7 +705,7 @@ This will work for any value that implements `IComparable<T>`.
 
 - `ToBeGreaterThanOrEqualTo(x)`: checks that the value is greater than or equal to x.
 
-```
+```C#
 Expect(5).ToBeLessThanOrEqualTo(4); // passes
 Expect(5).ToBeLessThanOrEqualTo(5); // passes
 ```
@@ -714,7 +714,7 @@ This will work for any value that implements `IComparable<T>`.
 
 - `ToMatch(x)`: checks that a string value matches the given Regular Expression.
 
-```
+```C#
 Expect("a1122").ToMatch("^a[12]{4}$"); // passes
 Expect("A1122").ToMatch(new Regex("^a[12]{4}$", RegexOptions.IgnoreCase)); // passes
 ```
@@ -728,7 +728,7 @@ are objects, the x item only needs to contain a subset of the properties.
 There is also an overload for `ToContain` that checks if a string value contains the
 given substring.
 
-```
+```C#
 Expect(new[] { "a", "b", "c" }).ToContain(new[] { "c", "b" }); // passes
 Expect("abc").ToContain("bc"); // passes
 Expect("abc").ToContain("cb"); // fails
@@ -750,7 +750,7 @@ from the given type or is null.
 - `Jaz.InstanceOf<T>()`: matches on any value that is of type T. Inheriting types,
 and null values are not matched.
 
-```
+```C#
 Expect(foo).ToEqual(new { x = Jaz.Any<int>() });
 ```
 
