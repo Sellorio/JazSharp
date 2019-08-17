@@ -751,7 +751,7 @@ from the given type or is null.
 and null values are not matched.
 
 ```
-Expect(foo).ToEqual(new { x = Jaz.Any&lt;int&gt;() });
+Expect(foo).ToEqual(new { x = Jaz.Any<int>() });
 ```
 
 <a id="developerGuide"></a>
