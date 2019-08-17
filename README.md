@@ -63,7 +63,7 @@ To start using JazSharp, all you have to do is install the `JazSharp` and `JazSh
 from nuget.org. The former is the core of the framework and the latter enables the framework to work with
 Visual Studio\'s Test Explorer as well as allowing tests to be executed by calling `dotnet test`.
 
-<a id="creatingTests"></a>
+<a id="creatingTests"></a><a href="#jazsharp" style="float:right">To top</a>
 ### Creating tests
 
 <a id="testClass"></a>
@@ -84,7 +84,7 @@ class FooSpec : Spec
 }
 ```
 
-<a id="describes"></a>
+<a id="describes"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Describes (test scopes)
 
 All tests need to be grouped into one or more levels of Describes. The first Describe should almost always be
@@ -154,7 +154,7 @@ class FooSpec : Spec
 }
 ```
 
-<a id="its"></a>
+<a id="its"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Its (tests)
 
 Now that you\'ve specified the scopes for the class, method and (optionally) scenarios
@@ -185,7 +185,7 @@ The above test will yield the following test description:
 
 `Foo Bar should initialize the flux capacitor.`
 
-<a id="beforeAfterEach"></a>
+<a id="beforeAfterEach"></a><a href="#jazsharp" style="float:right">To top</a>
 #### BeforeEach and AfterEach
 
 JazSharp allows you to specify logic that will execute before and after each test. This
@@ -234,7 +234,7 @@ Expectations (JazSharp's equivalent of Asserts - covered in a future section) ca
 specified in Before and After Each blocks. This can allow you to have expectations shared
 among multiple tests.
 
-<a id="excludingAndFocusing"></a>
+<a id="excludingAndFocusing"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Excluding and focusing
 
 Sometimes there are tests cannot be safely re-run, are intentionally broken or are simply
@@ -249,7 +249,7 @@ make running specific tests easy, it is also possible to "focus" tests in JazSha
 be focused by adding an "f" prefix to a `Describe` or `It` call. If any tests are focused,
 only focused tests will be executed.
 
-<a id="output"></a>
+<a id="output"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Custom Output
 
 A test can add to the output log for a test by writing to the output `StringBuilder` in
@@ -259,7 +259,7 @@ the current test context:
 Jaz.CurrentTest.Output.AppendLine("This will appear in the test output.");
 ```
 
-<a id="spying"></a>
+<a id="spying"></a><a href="#jazsharp" style="float:right">To top</a>
 ### Spying
 
 <a id="whatAreSpies"></a>
@@ -269,7 +269,7 @@ Spies are similar to mocks except that they are applied on a per-method basis. A
 alternative implementation of a method which records calls made to the method and allows the
 test to specify alternative behaviours of the methods.
 
-<a id="behaviours"></a>
+<a id="behaviours"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Behaviours
 
 You can spy on a method by using the `Jaz.SpyOn` method. Once spied on, a method will not
@@ -371,7 +371,7 @@ var result = int.Parse("5", out var parsedValue); // result is false, parsedValu
 `DoNothing` behaves the same as a default spy. The method exists solely for the purpose
 of calling `ThenChangeParameter`.
 
-<a id="sequences"></a>
+<a id="sequences"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Sequences and Quantifiers
 
 Spy behaviours can also be defined in a sequence. You got a taste for this when using
@@ -416,7 +416,7 @@ The available quantifiers are:
 - `Times(x)`: the behaviour executes a given number of times.
 - `Forever()`: the behaviour executes forever.
 
-<a id="propertySpies"></a>
+<a id="propertySpies"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Properties
 
 In addition to spying on methods, you can also spy on properties. The following
@@ -445,7 +445,7 @@ var array = new int[0];
 var propertySpy = Jaz.SpyOnProperty(array, nameof(array.Length)); // propertySpy.Setter is null
 ```
 
-<a id="createSpy"></a>
+<a id="createSpy"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Create Spy
 
 There are times where a spy in the form of a delegate is needed. These can be created
@@ -462,7 +462,7 @@ var list = new List<int>();
 list.Where(Jaz.CreateSpyFunc<int, boolean>(out var spy));
 ```
 
-<a id="calls"></a>
+<a id="calls"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Calls
 
 The `Calls` property that is available on the Spy object allows the test to retrieve information
@@ -470,7 +470,7 @@ about each call to the spied on method. A case where this data is needed would b
 being tested passes in a callback to another method. You can then get the callback from
 `Calls[i].Arguments[j]` and then test the behaviour of that callback.
 
-<a id="spyLimits"></a>
+<a id="spyLimits"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Limitations
 
 There are a few limitations on which methods can be spied on. These limitations include:
@@ -539,7 +539,7 @@ method calls have been tested but other, more obscure scenarios may have been mi
 changes are low but if you encounter an `InvalidProgramException` or other issue then
 please report it.
 
-<a id="expects"></a>
+<a id="expects"></a><a href="#jazsharp" style="float:right">To top</a>
 ### Expectations (asserts)
 
 JazSharp provides a sizable set of methods that can be used to check if the test was successful
@@ -561,7 +561,7 @@ Expect(spy).Not.ToHaveBeenCalled(); // fails
 The message in the `JazExpectationException` is different based on whether or not the check
 was inverted.
 
-<a id="spyExpects"></a>
+<a id="spyExpects"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Spy Expectations
 
 One of the three supported targets for an expectation is a spy. Spies can be checked in the
@@ -597,7 +597,7 @@ value.Split(new[] { ';' });
 Expect(spy).ToHaveBeenCalledWith(new[] { ';' }); // passes
 ```
 
-<a id="callExpects"></a>
+<a id="callExpects"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Call Expectations
 
 A method call be wrapped in `Expect` in order to allow an expected exception throw to be
@@ -618,7 +618,7 @@ Expect(() => throw new InvalidOperationException()).ToThrow<Exception>(); // fai
 Note: even if `ToThrow` is not called, the original exception will be caught and thus
 suppressed so only use a Call Expectation when checking for an expected exception.
 
-<a id="valueExpects"></a>
+<a id="valueExpects"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Value Expectations
 
 This is where the bulk of the expectation logic lies. The following checks are provided:
@@ -735,7 +735,7 @@ Expect("abc").ToContain("cb"); // fails
 Expect(new { x = 1, y = 2, z = 3 }).ToContain(new { y = 2 }); // passes
 ```
 
-<a id="matchers"></a>
+<a id="matchers"></a><a href="#jazsharp" style="float:right">To top</a>
 #### Matchers
 
 `ToEqual` and `ToContain` support a set of matchers which can be used in place of
@@ -754,7 +754,7 @@ and null values are not matched.
 Expect(foo).ToEqual(new { x = Jaz.Any<int>() });
 ```
 
-<a id="developerGuide"></a>
+<a id="developerGuide"></a><a href="#jazsharp" style="float:right">To top</a>
 ## Developer Guide
 
 You can clone the repository using this link: https://github.com/Sellorio/JazSharp.git
