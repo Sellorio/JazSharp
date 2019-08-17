@@ -460,6 +460,7 @@ button.Click += Jaz.CreateSpy<object, EventArgs>(out var spy);
 ```
 var list = new List<int>();
 list.Where(Jaz.CreateSpyFunc<int, boolean>(out var spy));
+```
 
 <a id="calls"></a>
 #### Calls
