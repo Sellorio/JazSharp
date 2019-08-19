@@ -1,7 +1,6 @@
 ﻿using JazSharp.Testing;
 using Mono.Cecil;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
 
 namespace JazSharp.ManualTest
 {

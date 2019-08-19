@@ -36,7 +36,7 @@ namespace JazSharp.Testing.AssemblyLoading
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _loadContext.Resolving -= OnResolving;
         }
 
         private Assembly OnResolving(AssemblyLoadContext context, AssemblyName name)

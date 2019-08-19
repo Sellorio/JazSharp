@@ -262,6 +262,28 @@ namespace JazSharp
         }
 
         /// <summary>
+        /// Starts defining an expectation on a method call. This will catch any exceptions
+        /// and allow you to specify which exception is expected.
+        /// </summary>
+        /// <param name="call">The method to call.</param>
+        /// <returns>The object used to specify a specific expectation.</returns>
+        public static async Task<CallExpect> ExpectAsync(Func<Task> call)
+        {
+            Exception exception = null;
+
+            try
+            {
+                await call();
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+            }
+
+            return new CallExpect(exception);
+        }
+
+        /// <summary>
         /// Starts defining an expectation on a value.
         /// </summary>
         /// <param name="value">The value being tested.</param>

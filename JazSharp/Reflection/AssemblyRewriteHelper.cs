@@ -62,10 +62,9 @@ namespace JazSharp.Reflection
         {
             var byRefWrappers = new Dictionary<MethodDefinition, MethodDefinition>();
 
-            for (var i = 0; i < type.Methods.Count; i++)
+            // using ToList to copy list since sometimes RewriteMethod adds wrapper methods to the class
+            foreach (var method in type.Methods.ToList())
             {
-                var method = type.Methods[i];
-
                 if (!byRefWrappers.Values.Contains(method))
                 {
                     RewriteMethod(method, byRefWrappers);
@@ -104,6 +103,7 @@ namespace JazSharp.Reflection
                 else if ((instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt) && !hasConstrainedModifier)
                 {
                     var calledMethod = (MethodReference)instruction.Operand;
+
                     var replacement = GetSpyInstruction(method, calledMethod, byRefWrappers, instruction.OpCode == OpCodes.Call);
 
                     if (replacement != null)
@@ -153,6 +153,13 @@ namespace JazSharp.Reflection
                     var isBaseCall = resolvedCalledMethod != null && isUsingCallOpCode && resolvedCalledMethod.IsVirtual;
                     // cannot spy on constructors intentionally
                     var isConstructor = resolvedCalledMethod != null && resolvedCalledMethod.IsConstructor;
+
+                    // compiler generated await logic
+                    if (calledMethod.DeclaringType.FullName.StartsWith("System.Runtime.CompilerServices.AsyncTaskMethodBuilder")
+                        || calledMethod.DeclaringType.FullName.StartsWith("System.Runtime.CompilerServices.TaskAwaiter"))
+                    {
+                        return null;
+                    }
 
                     if (isBaseCall || isConstructor)
                     {
