@@ -27,71 +27,47 @@ namespace JazSharp.TestAdapter
 
         public void RunTests(IEnumerable<TestCase> tests, IRunContext runContext, IFrameworkHandle frameworkHandle)
         {
-            try
-            {
-                var testsList = tests.ToList();
-                var testCollection = TestCollection.FromSources(testsList.Select(x => x.Source).Distinct());
+            var testsList = tests.ToList();
+            var testCollection = TestCollection.FromSources(testsList.Select(x => x.Source).Distinct());
 
-                var testMapping =
-                    new Dictionary<Test, TestCase>(
-                        testCollection.Tests
-                            .Select(x => new KeyValuePair<Test, TestCase>(x, testsList.FirstOrDefault(y => x.IsForTestCase(y))))
-                            .Where(x => x.Value != null));
+            var testMapping =
+                new Dictionary<Test, TestCase>(
+                    testCollection.Tests
+                        .Select(x => new KeyValuePair<Test, TestCase>(x, testsList.FirstOrDefault(y => x.IsForTestCase(y))))
+                        .Where(x => x.Value != null));
 
-                testCollection.Filter(testMapping.ContainsKey);
+            testCollection.Filter(testMapping.ContainsKey);
 
-                ExecuteTestRun(testCollection, frameworkHandle, testMapping);
-            }
-            catch (Exception ex)
-            {
-                File.WriteAllText("C:/Users/seamillo/Desktop/jazsharp.testadapter.log", ex.ToString());
-                throw;
-            }
+            ExecuteTestRun(testCollection, frameworkHandle, testMapping);
         }
 
         public void RunTests(IEnumerable<string> sources, IRunContext runContext, IFrameworkHandle frameworkHandle)
         {
-            try
-            {
-                var testCollection = TestCollection.FromSources(sources);
-                ExecuteTestRun(testCollection, frameworkHandle, testCollection.Tests.ToDictionary(x => x, x => x.ToTestCase()));
-            }
-            catch (Exception ex)
-            {
-                File.WriteAllText("C:/Users/seamillo/Desktop/jazsharp.testadapter.log", ex.ToString());
-                throw;
-            }
-}
+            var testCollection = TestCollection.FromSources(sources);
+            ExecuteTestRun(testCollection, frameworkHandle, testCollection.Tests.ToDictionary(x => x, x => x.ToTestCase()));
+        }
 
         private void ExecuteTestRun(TestCollection testCollection, IFrameworkHandle frameworkHandle, Dictionary<Test, TestCase> testMapping)
         {
-            try
+            _testRun = testCollection.CreateTestRun();
+
+            _testRun.TestCompleted += result =>
             {
-                _testRun = testCollection.CreateTestRun();
-
-                _testRun.TestCompleted += result =>
+                var vsResult = new VisualStudioTestResult(testMapping[result.Test])
                 {
-                    var vsResult = new VisualStudioTestResult(testMapping[result.Test])
-                    {
-                        Outcome = OutcomeFromResult(result.Result),
-                        Duration = result.Duration,
-                        ErrorMessage = result.Output,
-                        ErrorStackTrace = GetCombinedStackTrace(result.Exception)
-                    };
-
-                    vsResult.Messages.Add(new TestResultMessage(TestResultMessage.StandardOutCategory, result.Output));
-                    vsResult.ErrorStackTrace = GetCombinedStackTrace(result.Exception);
-
-                    frameworkHandle.RecordResult(vsResult);
+                    Outcome = OutcomeFromResult(result.Result),
+                    Duration = result.Duration,
+                    ErrorMessage = result.Output,
+                    ErrorStackTrace = GetCombinedStackTrace(result.Exception)
                 };
 
-                _testRun.ExecuteAsync().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                File.WriteAllText("C:/Users/seamillo/Desktop/jazsharp.testadapter.log", ex.ToString());
-                throw;
-            }
+                vsResult.Messages.Add(new TestResultMessage(TestResultMessage.StandardOutCategory, result.Output));
+                vsResult.ErrorStackTrace = GetCombinedStackTrace(result.Exception);
+
+                frameworkHandle.RecordResult(vsResult);
+            };
+
+            _testRun.ExecuteAsync().GetAwaiter().GetResult();
         }
 
         private static TestOutcome OutcomeFromResult(Testing.TestResult result)

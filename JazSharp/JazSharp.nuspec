@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>JazSharp</id>
-    <version>1.0.0-beta.1</version>
+    <version>1.0.0-beta.2</version>
     <title>JazSharp</title>
     <authors>Sea Millo</authors>
     <owners>Sea Millo</owners>
@@ -15,7 +15,7 @@
       Major benefits of using this framework over others is that you can mock non-virtual and static calls
       removing interfaces and dependency injection as requirements for effective unit testing.
     </description>
-    <releaseNotes>Initial beta release.</releaseNotes>
+    <releaseNotes>Fixing async await issues.</releaseNotes>
     <copyright>Copyright 2019</copyright>
     <tags>C# csharp jasmine unit testing mock mocking spy</tags>
     <dependencies>

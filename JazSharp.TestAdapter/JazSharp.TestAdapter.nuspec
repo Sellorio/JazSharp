@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>JazSharp.TestAdapter</id>
-    <version>1.0.0-beta.1</version>
+    <version>1.0.0-beta.2</version>
     <title>JazSharp</title>
     <authors>Sea Millo</authors>
     <owners>Sea Millo</owners>
@@ -10,7 +10,7 @@
     <license type="file">License.txt</license>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>This package needs to be installed in order to execute JazSharp unit tests in visual studio and the dotnet command line.</description>
-    <releaseNotes>Initial beta release.</releaseNotes>
+    <releaseNotes>Fixing async await issues.</releaseNotes>
     <copyright>Copyright 2019</copyright>
     <tags>C# csharp jasmine unit testing mock mocking spy</tags>
     <dependencies>
