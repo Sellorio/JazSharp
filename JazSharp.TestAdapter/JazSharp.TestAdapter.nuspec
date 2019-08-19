@@ -7,7 +7,7 @@
     <authors>Sea Millo</authors>
     <owners>Sea Millo</owners>
     <projectUrl>https://github.com/Sellorio/JazSharp</projectUrl>
-    <!--<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+    <license type="file">License.txt</license>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>This package needs to be installed in order to execute JazSharp unit tests in visual studio and the dotnet command line.</description>
     <releaseNotes>Initial beta release.</releaseNotes>
@@ -23,5 +23,6 @@
   <files>
     <file src="bin\Release\netcoreapp2.0\JazSharp.TestAdapter.dll" target="lib/netcoreapp2.0" />
     <file src="JazSharp.TestAdapter.props" target="build" />
+    <file src="..\JazSharp\License.txt" target="" />
   </files>
 </package>
