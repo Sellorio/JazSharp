@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>JazSharp</id>
-    <version>1.0.0-beta1</version>
+    <version>1.0.0-beta.1</version>
     <title>JazSharp</title>
     <authors>Sea Millo</authors>
     <owners>Sea Millo</owners>
@@ -16,7 +16,13 @@
     </description>
     <releaseNotes>Initial beta release.</releaseNotes>
     <copyright>Copyright 2019</copyright>
-    <tags>C# csharp jasmine unit testing</tags>
+    <tags>C# csharp jasmine unit testing mock mocking spy</tags>
+    <dependencies>
+      <dependency id="Mono.Cecil" version="0.10.4" />
+      <dependency id="System.Collections.Immutable" version="1.5.0" />
+      <dependency id="System.Runtime.Loader" version="4.3.0" />
+      <dependency id="Microsoft.Extensions.DependencyModel" version="2.1.0" />
+    </dependencies>
   </metadata>
   <files>
     <file src="bin\Release\netstandard2.0\JazSharp.dll" target="lib\netstandard2.0" />

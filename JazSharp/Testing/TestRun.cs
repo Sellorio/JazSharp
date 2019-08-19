@@ -1,4 +1,5 @@
 ﻿using JazSharp.Reflection;
+using JazSharp.Testing.AssemblyLoading;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -57,7 +58,7 @@ namespace JazSharp.Testing
             jazAssembly
                 .GetType(typeof(AssemblyContext).FullName)
                 .GetMethod(nameof(AssemblyContext.SetupCurrent), BindingFlags.Static | BindingFlags.NonPublic)
-                .Invoke(null, new object[] { _assemblyContext.DllSearchPaths, _assemblyContext.LoadedAssemblies });
+                .Invoke(null, new object[] { _assemblyContext.LoadedAssemblies });
         }
 
         /// <summary>
@@ -247,8 +248,10 @@ namespace JazSharp.Testing
                 }
             }
 
-            var assemblyContext = new AssemblyContext(temporaryDirectories.ToArray());
+            var assemblyContext = new AssemblyContext();
             var executionReadyAssemblies = sources.Select(assemblyContext.Load).ToList();
+            assemblyContext.InitialiseDependencyResolvers();
+            var jazSharpAssembly = assemblyContext.LoadByName(typeof(Jaz).Assembly.GetName());
 
             return
                 new TestRun(
@@ -256,7 +259,7 @@ namespace JazSharp.Testing
                     testCollection.Tests.Select(x =>
                         x.Prepare(
                             executionReadyAssemblies.First(y => y.FullName == x.Execution.Main.Method.Module.Assembly.FullName),
-                            assemblyContext.LoadedAssemblies[typeof(Jaz).Assembly.GetName().Name])),
+                            jazSharpAssembly)),
                     temporaryDirectories);
         }
 

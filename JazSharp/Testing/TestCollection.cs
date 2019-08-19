@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JazSharp.Testing.AssemblyLoading;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -53,7 +54,7 @@ namespace JazSharp.Testing
         /// </summary>
         public void Dispose()
         {
-            //TODO: Unload assembly context here when supported
+            _assemblyContext.Dispose();
         }
 
         /// <summary>

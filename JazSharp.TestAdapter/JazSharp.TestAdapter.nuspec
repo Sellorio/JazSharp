@@ -1,17 +1,27 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>$id$</id>
-    <version>$version$</version>
-    <title>$title$</title>
-    <authors>$author$</authors>
-    <owners>$author$</owners>
+    <id>JazSharp.TestAdapter</id>
+    <version>1.0.0-beta.1</version>
+    <title>JazSharp</title>
+    <authors>Sea Millo</authors>
+    <owners>Sea Millo</owners>
     <projectUrl>https://github.com/Sellorio/JazSharp</projectUrl>
     <!--<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>$description$</description>
+    <description>This package needs to be installed in order to execute JazSharp unit tests in visual studio and the dotnet command line.</description>
     <releaseNotes>Initial beta release.</releaseNotes>
     <copyright>Copyright 2019</copyright>
-    <tags>C# csharp jasmine unit testing</tags>
+    <tags>C# csharp jasmine unit testing mock mocking spy</tags>
+    <dependencies>
+      <dependency id="JazSharp" version="1.0.0-beta.1" />
+      <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" />
+      <dependency id="Microsoft.TestPlatform.ObjectModel" version="16.2.0" />
+      <dependency id="System.ComponentModel.Composition" version="4.5.0" />
+    </dependencies>
   </metadata>
+  <files>
+    <file src="bin\Release\netcoreapp2.0\JazSharp.TestAdapter.dll" target="lib/netcoreapp2.0" />
+    <file src="JazSharp.TestAdapter.props" target="build" />
+  </files>
 </package>

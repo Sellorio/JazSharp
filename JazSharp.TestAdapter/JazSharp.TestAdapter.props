@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)..\lib\netcoreapp2.0\JazSharp.TestAdapter.dll">
+      <Link>JazSharp.TestAdapter.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+
+    <!--<Content Include="$(MSBuildThisFileDirectory)..\..\..\System.ComponentModel.Composition\4.5.0\lib\netstandard2.0\System.ComponentModel.Composition.dll">
+      <Link>System.ComponentModel.Composition.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>-->
+  </ItemGroup>
+</Project>
