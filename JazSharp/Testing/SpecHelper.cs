@@ -93,24 +93,15 @@ namespace JazSharp.Testing
         internal static Delegate[][] GetTestExecutionMethods(Type spec, string testFullName)
         {
             var tests = GetTestsInSpec(spec);
-            Delegate[][] result = null;
 
-            for (var i = 0; i < tests.Length; i++)
-            {
-                if (tests[i].FullName == testFullName)
-                {
-                    result = new Delegate[][]
+            return (from t in tests
+                    where t.FullName == testFullName
+                    select new[]
                     {
-                        tests[i].Execution.BeforeEach.ToArray(),
-                        new[] { tests[i].Execution.Main },
-                        tests[i].Execution.AfterEach.ToArray()
-                    };
-
-                    break;
-                }
-            }
-
-            return result;
+                        t.Execution.BeforeEach.ToArray(),
+                        new[] {t.Execution.Main},
+                        t.Execution.AfterEach.ToArray()
+                    }).FirstOrDefault();
         }
 
         private static IEnumerable<Delegate> GetBeforeEachMethods(DescribeStackItem describeStackItem)
