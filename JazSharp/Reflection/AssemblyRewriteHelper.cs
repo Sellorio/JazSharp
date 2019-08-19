@@ -62,10 +62,8 @@ namespace JazSharp.Reflection
         {
             var byRefWrappers = new Dictionary<MethodDefinition, MethodDefinition>();
 
-            for (var i = 0; i < type.Methods.Count; i++)
+            foreach (var method in type.Methods)
             {
-                var method = type.Methods[i];
-
                 if (!byRefWrappers.Values.Contains(method))
                 {
                     RewriteMethod(method, byRefWrappers);
