@@ -673,7 +673,7 @@ Expect(new int[0]).ToBeEmpty(); // passes
 
 ```C#
 Expect(5).ToBeBetween(3, 7); // passes
-Expect(new DateTime(2010, 10, 10)).ToBeBetween(new DateTime(2009, 9, 9), new DateTime(2011, 11, 11));
+Expect(new DateTime(2010, 10, 10)).ToBeBetween(new DateTime(2009, 9, 9), new DateTime(2011, 11, 11)); // passes
 ```
 
 This will work for any value that implements `IComparable<T>`.
