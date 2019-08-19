@@ -666,7 +666,7 @@ Expect((string)null).ToBeDefault(); // passes;
 
 ```C#
 Expect("").ToBeEmpty(); // passes
-Expect(new int[0]); // passes
+Expect(new int[0]).ToBeEmpty(); // passes
 ```
 
 - `ToBeBetween(x, y)`: checks that the value is between x and y.
