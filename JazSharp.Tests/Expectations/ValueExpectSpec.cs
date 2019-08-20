@@ -155,6 +155,11 @@ namespace JazSharp.Tests.Expectations
                         Expect(0).ToBeDefault();
                     });
 
+                    It("should pass on null for interface type.", () =>
+                    {
+                        Expect((System.ICloneable)null).ToBeDefault();
+                    });
+
                     Describe("with Not", () =>
                     {
                         It("should pass on an instance.", () =>
@@ -172,9 +177,14 @@ namespace JazSharp.Tests.Expectations
                             Expect(() => Expect((object)null).Not.ToBeDefault()).ToThrow<JazExpectationException>();
                         });
 
-                        It("should pass on zero.", () =>
+                        It("should fail on zero.", () =>
                         {
                             Expect(() => Expect(0).Not.ToBeDefault()).ToThrow<JazExpectationException>();
+                        });
+
+                        It("should fail on null for interface type.", () =>
+                        {
+                            Expect(() => Expect((System.ICloneable)null).Not.ToBeDefault()).ToThrow<JazExpectationException>();
                         });
                     });
                 });

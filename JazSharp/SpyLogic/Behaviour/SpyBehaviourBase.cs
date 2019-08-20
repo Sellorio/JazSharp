@@ -50,7 +50,10 @@ namespace JazSharp.SpyLogic.Behaviour
 
         private static object GetDefaultValue(Type type)
         {
-            return type == typeof(void) || type.IsClass ? null : Activator.CreateInstance(type);
+            return
+                type == typeof(void) || type.IsClass || type.IsInterface
+                    ? null
+                    : Activator.CreateInstance(type);
         }
     }
 }
