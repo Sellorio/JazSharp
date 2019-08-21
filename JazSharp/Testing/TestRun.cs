@@ -1,4 +1,5 @@
 ﻿using JazSharp.Reflection;
+using JazSharp.Spies;
 using JazSharp.Testing.AssemblyLoading;
 using System;
 using System.Collections.Generic;
@@ -19,9 +20,10 @@ namespace JazSharp.Testing
     /// </summary>
     public sealed class TestRun : IDisposable
     {
+        private static readonly SemaphoreSlim _testSynchroniser = new SemaphoreSlim(1, 1);
+
+        private readonly MethodInfo _clearSpiesMethod;
         private readonly AssemblyContext _assemblyContext;
-        private readonly MethodInfo _setupTestExecutionContextMethod;
-        private readonly MethodInfo _clearTestExecutionContextMethod;
         private readonly IEnumerable<string> _temporaryDirectories;
         private bool _isExecuting;
         private CancellationTokenSource _cancellationTokenSource;
@@ -50,15 +52,7 @@ namespace JazSharp.Testing
             Tests = ImmutableArray.CreateRange(tests);
 
             var jazAssembly = _assemblyContext.LoadedAssemblies[typeof(Jaz).Assembly.GetName().Name];
-            var jaz = jazAssembly.GetType(typeof(Jaz).FullName);
-
-            _setupTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.SetupTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
-            _clearTestExecutionContextMethod = jaz.GetMethod(nameof(Jaz.ClearTestExecutionContext), BindingFlags.Static | BindingFlags.NonPublic);
-
-            jazAssembly
-                .GetType(typeof(AssemblyContext).FullName)
-                .GetMethod(nameof(AssemblyContext.SetupCurrent), BindingFlags.Static | BindingFlags.NonPublic)
-                .Invoke(null, new object[] { _assemblyContext.LoadedAssemblies });
+            _clearSpiesMethod = jazAssembly.GetType(typeof(Spy).FullName).GetMethod(nameof(Spy.ClearAll), BindingFlags.Static | BindingFlags.NonPublic);
         }
 
         /// <summary>
@@ -135,8 +129,7 @@ namespace JazSharp.Testing
             Exception exception = null;
             TestResult testResult;
 
-            await Jaz.CurrentTestSemaphore.WaitAsync();
-            _setupTestExecutionContextMethod.Invoke(null, new object[] { test.FullName, output });
+            await _testSynchroniser.WaitAsync();
 
             if (test.IsExcluded)
             {
@@ -156,13 +149,20 @@ namespace JazSharp.Testing
 
                     foreach (var method in test.Execution.GetDelegates())
                     {
-                        if (method is Action action)
+                        switch (method)
                         {
-                            action.Invoke();
-                        }
-                        else
-                        {
-                            await ((Func<Task>)method).Invoke();
+                            case Action normal:
+                                normal.Invoke();
+                                break;
+                            case Action<StringBuilder> normalWithOutput:
+                                normalWithOutput.Invoke(output);
+                                break;
+                            case Func<Task> task:
+                                await task.Invoke();
+                                break;
+                            case Func<StringBuilder, Task> taskWithOutput:
+                                await taskWithOutput.Invoke(output);
+                                break;
                         }
                     }
 
@@ -185,8 +185,8 @@ namespace JazSharp.Testing
                 }
             }
 
-            _clearTestExecutionContextMethod.Invoke(null, new object[0]);
-            Jaz.CurrentTestSemaphore.Release();
+            _clearSpiesMethod.Invoke(null, new object[0]);
+            _testSynchroniser.Release();
 
             var result = new TestResultInfo(test, testResult, output.ToString().Trim(), exception, stopwatch.Elapsed);
 

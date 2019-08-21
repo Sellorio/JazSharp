@@ -9,13 +9,13 @@ namespace JazSharp.SpyLogic.Behaviour
     {
         internal static SpyBehaviourBase Default => new DefaultBehaviour();
 
-        internal Dictionary<int, object> ParameterChangesBeforeExecution { get; set; } = new Dictionary<int, object>();
-        internal Dictionary<int, object> ParameterChangesAfterExecution { get; } = new Dictionary<int, object>();
+        internal Dictionary<string, object> ParameterChangesBeforeExecution { get; set; } = new Dictionary<string, object>();
+        internal Dictionary<string, object> ParameterChangesAfterExecution { get; } = new Dictionary<string, object>();
         internal int Lifetime { get; private set; }
 
         internal object Execute(Spy spy, MethodInfo exactMethod, object instance, object[] parameters)
         {
-            ApplyParameterChanges(parameters, ParameterChangesBeforeExecution);
+            ApplyParameterChanges(exactMethod, parameters, ParameterChangesBeforeExecution);
 
             var args = new BehaviourArgs(spy, exactMethod, instance, parameters);
 
@@ -28,7 +28,7 @@ namespace JazSharp.SpyLogic.Behaviour
                 spy.Behaviours.Dequeue();
             }
 
-            ApplyParameterChanges(parameters, ParameterChangesAfterExecution);
+            ApplyParameterChanges(exactMethod, parameters, ParameterChangesAfterExecution);
 
             return args.HasResult ? args.Result : GetDefaultValue(exactMethod.ReturnType);
         }
@@ -40,11 +40,22 @@ namespace JazSharp.SpyLogic.Behaviour
 
         protected abstract void Execute(BehaviourArgs args);
 
-        private static void ApplyParameterChanges(object[] parameters, Dictionary<int, object> parameterChanges)
+        private static void ApplyParameterChanges(MethodInfo exactMethod, object[] parameters, Dictionary<string, object> parameterChanges)
         {
-            foreach (var parameterChange in parameterChanges)
+            var methodParameters = exactMethod.GetParameters();
+
+            for (var i = 0; i < methodParameters.Length; i++)
             {
-                parameters[parameterChange.Key] = parameterChange.Value;
+                var parameterName = methodParameters[i].Name;
+
+                foreach (var parameterChange in parameterChanges)
+                {
+                    if (parameterName == parameterChange.Key)
+                    {
+                        parameters[i] = parameterChange.Value;
+                        break;
+                    }
+                }
             }
         }
 

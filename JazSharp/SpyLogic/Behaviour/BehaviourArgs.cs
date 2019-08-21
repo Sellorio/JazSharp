@@ -24,7 +24,7 @@ namespace JazSharp.SpyLogic.Behaviour
         internal Spy Spy { get; }
 
         /// <summary>
-        /// The exact method that the spy wraps. This should be used instead of <see cref="Spy.Method"/>
+        /// The exact method that the spy wraps. This should be used instead of <see cref="Spy.Methods"/>
         /// since it preserves inheritance and generic parameters.
         /// </summary>
         internal MethodInfo ExactMethod { get; }

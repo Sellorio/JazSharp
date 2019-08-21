@@ -164,7 +164,7 @@ namespace JazSharp.SpyLogic
         private static TDelegate MakeSpy<TDelegate>(TDelegate @delegate, out Spy spyVariable, out Spy spyOutParameter)
             where TDelegate : Delegate
         {
-            spyVariable = Spy.Create(@delegate.Method, Guid.NewGuid());
+            spyVariable = Spy.Create(new[] { @delegate.Method }, Guid.NewGuid());
             spyOutParameter = spyVariable;
 
             return @delegate;

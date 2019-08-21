@@ -3,6 +3,7 @@ using JazSharp.Spies;
 using JazSharp.Testing;
 using System;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 
 #pragma warning disable IDE1006 // Naming Styles
@@ -100,6 +101,42 @@ namespace JazSharp
         }
 
         /// <summary>
+        /// Defines a test. All tests must be contained in at least 1 level of Describes.
+        /// </summary>
+        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
+        /// <param name="test">The implementation of the test.</param>
+        /// <param name="sourceFile">Do not manually specify this parameter.</param>
+        /// <param name="lineNumber">Do not manually specify this parameter.</param>
+        public static void It(string testDescription, Action<StringBuilder> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        {
+            SpecHelper.RegisterTest(testDescription, test, false, false, sourceFile, lineNumber);
+        }
+
+        /// <summary>
+        /// Defines a test. All tests must be contained in at least 1 level of Describes.
+        /// </summary>
+        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
+        /// <param name="test">The implementation of the test.</param>
+        /// <param name="sourceFile">Do not manually specify this parameter.</param>
+        /// <param name="lineNumber">Do not manually specify this parameter.</param>
+        public static void It(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        {
+            SpecHelper.RegisterTest(testDescription, test, false, false, sourceFile, lineNumber);
+        }
+
+        /// <summary>
+        /// Defines a test. All tests must be contained in at least 1 level of Describes.
+        /// </summary>
+        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
+        /// <param name="test">The implementation of the test.</param>
+        /// <param name="sourceFile">Do not manually specify this parameter.</param>
+        /// <param name="lineNumber">Do not manually specify this parameter.</param>
+        public static void It(string testDescription, Func<StringBuilder, Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        {
+            SpecHelper.RegisterTest(testDescription, test, false, false, sourceFile, lineNumber);
+        }
+
+        /// <summary>
         /// Excludes the test from all test runs.
         /// </summary>
         /// <param name="testDescription">The description of the test. The description should start with "should".</param>
@@ -107,6 +144,42 @@ namespace JazSharp
         /// <param name="sourceFile">Do not manually specify this parameter.</param>
         /// <param name="lineNumber">Do not manually specify this parameter.</param>
         public static void xIt(string testDescription, Action test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        {
+            SpecHelper.RegisterTest(testDescription, test, false, true, sourceFile, lineNumber);
+        }
+
+        /// <summary>
+        /// Excludes the test from all test runs.
+        /// </summary>
+        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
+        /// <param name="test">The implementation of the test.</param>
+        /// <param name="sourceFile">Do not manually specify this parameter.</param>
+        /// <param name="lineNumber">Do not manually specify this parameter.</param>
+        public static void xIt(string testDescription, Action<StringBuilder> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        {
+            SpecHelper.RegisterTest(testDescription, test, false, true, sourceFile, lineNumber);
+        }
+
+        /// <summary>
+        /// Excludes the test from all test runs.
+        /// </summary>
+        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
+        /// <param name="test">The implementation of the test.</param>
+        /// <param name="sourceFile">Do not manually specify this parameter.</param>
+        /// <param name="lineNumber">Do not manually specify this parameter.</param>
+        public static void xIt(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        {
+            SpecHelper.RegisterTest(testDescription, test, false, true, sourceFile, lineNumber);
+        }
+
+        /// <summary>
+        /// Excludes the test from all test runs.
+        /// </summary>
+        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
+        /// <param name="test">The implementation of the test.</param>
+        /// <param name="sourceFile">Do not manually specify this parameter.</param>
+        /// <param name="lineNumber">Do not manually specify this parameter.</param>
+        public static void xIt(string testDescription, Func<StringBuilder, Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
             SpecHelper.RegisterTest(testDescription, test, false, true, sourceFile, lineNumber);
         }
@@ -124,27 +197,15 @@ namespace JazSharp
         }
 
         /// <summary>
-        /// Defines a test. All tests must be contained in at least 1 level of Describes.
+        /// Focuses the test. Any non-focused tests will be exlcuded from the test runs.
         /// </summary>
         /// <param name="testDescription">The description of the test. The description should start with "should".</param>
         /// <param name="test">The implementation of the test.</param>
         /// <param name="sourceFile">Do not manually specify this parameter.</param>
         /// <param name="lineNumber">Do not manually specify this parameter.</param>
-        public static void It(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        public static void fIt(string testDescription, Action<StringBuilder> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
-            SpecHelper.RegisterTest(testDescription, test, false, false, sourceFile, lineNumber);
-        }
-
-        /// <summary>
-        /// Excludes the test from all test runs.
-        /// </summary>
-        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
-        /// <param name="test">The implementation of the test.</param>
-        /// <param name="sourceFile">Do not manually specify this parameter.</param>
-        /// <param name="lineNumber">Do not manually specify this parameter.</param>
-        public static void xIt(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
-        {
-            SpecHelper.RegisterTest(testDescription, test, false, true, sourceFile, lineNumber);
+            SpecHelper.RegisterTest(testDescription, test, true, false, sourceFile, lineNumber);
         }
 
         /// <summary>
@@ -155,6 +216,18 @@ namespace JazSharp
         /// <param name="sourceFile">Do not manually specify this parameter.</param>
         /// <param name="lineNumber">Do not manually specify this parameter.</param>
         public static void fIt(string testDescription, Func<Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
+        {
+            SpecHelper.RegisterTest(testDescription, test, true, false, sourceFile, lineNumber);
+        }
+
+        /// <summary>
+        /// Focuses the test. Any non-focused tests will be exlcuded from the test runs.
+        /// </summary>
+        /// <param name="testDescription">The description of the test. The description should start with "should".</param>
+        /// <param name="test">The implementation of the test.</param>
+        /// <param name="sourceFile">Do not manually specify this parameter.</param>
+        /// <param name="lineNumber">Do not manually specify this parameter.</param>
+        public static void fIt(string testDescription, Func<StringBuilder, Task> test, [CallerFilePath] string sourceFile = default, [CallerLineNumber] int lineNumber = default)
         {
             SpecHelper.RegisterTest(testDescription, test, true, false, sourceFile, lineNumber);
         }
@@ -180,7 +253,33 @@ namespace JazSharp
         /// Describe.
         /// </summary>
         /// <param name="beforeEach">The logic to be executed.</param>
+        public static void BeforeEach(Action<StringBuilder> beforeEach)
+        {
+            SpecHelper.AddBeforeEach(beforeEach);
+        }
+
+        /// <summary>
+        /// Defines logic that will execute before each test. This is used to initialise
+        /// variables, spies and static values that are shared among multiple tests. The
+        /// logic contained will only execute for tests in the current Describe context
+        /// or any child Describe contexts. Before eaches can only be defined inside a
+        /// Describe.
+        /// </summary>
+        /// <param name="beforeEach">The logic to be executed.</param>
         public static void BeforeEach(Func<Task> beforeEach)
+        {
+            SpecHelper.AddBeforeEach(beforeEach);
+        }
+
+        /// <summary>
+        /// Defines logic that will execute before each test. This is used to initialise
+        /// variables, spies and static values that are shared among multiple tests. The
+        /// logic contained will only execute for tests in the current Describe context
+        /// or any child Describe contexts. Before eaches can only be defined inside a
+        /// Describe.
+        /// </summary>
+        /// <param name="beforeEach">The logic to be executed.</param>
+        public static void BeforeEach(Func<StringBuilder, Task> beforeEach)
         {
             SpecHelper.AddBeforeEach(beforeEach);
         }
@@ -204,7 +303,31 @@ namespace JazSharp
         /// Before eaches can only be defined inside a Describe.
         /// </summary>
         /// <param name="afterEach">The logic to be executed.</param>
+        public static void AfterEach(Action<StringBuilder> afterEach)
+        {
+            SpecHelper.AddAfterEach(afterEach);
+        }
+
+        /// <summary>
+        /// Defines logic that will execute after each test. This can be used to clean up
+        /// after a test or check some common expectations. The logic contained will only
+        /// execute for tests in the current Describe context or any child Describe contexts.
+        /// Before eaches can only be defined inside a Describe.
+        /// </summary>
+        /// <param name="afterEach">The logic to be executed.</param>
         public static void AfterEach(Func<Task> afterEach)
+        {
+            SpecHelper.AddAfterEach(afterEach);
+        }
+
+        /// <summary>
+        /// Defines logic that will execute after each test. This can be used to clean up
+        /// after a test or check some common expectations. The logic contained will only
+        /// execute for tests in the current Describe context or any child Describe contexts.
+        /// Before eaches can only be defined inside a Describe.
+        /// </summary>
+        /// <param name="afterEach">The logic to be executed.</param>
+        public static void AfterEach(Func<StringBuilder, Task> afterEach)
         {
             SpecHelper.AddAfterEach(afterEach);
         }

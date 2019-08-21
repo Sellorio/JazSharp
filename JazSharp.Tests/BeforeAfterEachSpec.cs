@@ -8,62 +8,62 @@
         {
             Describe("Before and after each", () =>
             {
-                BeforeEach(() =>
+                BeforeEach(output =>
                 {
                     _orderedKey += "A";
-                    Jaz.CurrentTest.Output.AppendLine("A");
+                    output.AppendLine("A");
                 });
 
-                BeforeEach(() =>
+                BeforeEach(output =>
                 {
                     _orderedKey += "B";
-                    Jaz.CurrentTest.Output.AppendLine("B");
+                    output.AppendLine("B");
                 });
 
                 Describe("when scoped", () =>
                 {
-                    BeforeEach(() =>
+                    BeforeEach(output =>
                     {
                         _orderedKey += "C";
-                        Jaz.CurrentTest.Output.AppendLine("C");
+                        output.AppendLine("C");
                     });
 
                     It("should run out-in and in-out respectively.", () =>
                     {
                     });
 
-                    AfterEach(() =>
+                    AfterEach(output =>
                     {
                         _orderedKey += "C";
-                        Jaz.CurrentTest.Output.AppendLine("C");
+                        output.AppendLine("C");
                     });
                 });
 
                 Describe("(no tests, not run)", () =>
                 {
-                    BeforeEach(() =>
+                    BeforeEach(output =>
                     {
                         _orderedKey += "E";
-                        Jaz.CurrentTest.Output.AppendLine("E");
+                        output.AppendLine("E");
                     });
 
-                    AfterEach(() =>
+                    AfterEach(output =>
                     {
                         _orderedKey += "E";
-                        Jaz.CurrentTest.Output.AppendLine("E");
+                        output.AppendLine("E");
                     });
                 });
 
-                AfterEach(() =>
+                AfterEach(output =>
                 {
                     _orderedKey += "B";
-                    Jaz.CurrentTest.Output.AppendLine("B");
+                    output.AppendLine("B");
                 });
 
-                AfterEach(() =>
+                AfterEach(output =>
                 {
                     _orderedKey += "A";
-                    Jaz.CurrentTest.Output.AppendLine("A");
+                    output.AppendLine("A");
                     Expect(_orderedKey).ToBe("ABCCBA");
                 });
             });

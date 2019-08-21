@@ -54,13 +54,5 @@ namespace JazSharp.Testing.AssemblyLoading
             _dependencyResolvers = null;
             //TODO: unload assemblies
         }
-        
-        internal static void SetupCurrent(Dictionary<string, Assembly> loadedAssemblies)
-        {
-            Current = new AssemblyContext(null)
-            {
-                LoadedAssemblies = loadedAssemblies
-            };
-        }
     }
 }

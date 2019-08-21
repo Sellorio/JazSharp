@@ -10,7 +10,7 @@ namespace JazSharp.Spies
     /// </summary>
     public class SpyThen : ISpy
     {
-        private readonly Dictionary<int, object> _parameterChanges = new Dictionary<int, object>();
+        private readonly Dictionary<string, object> _parameterChanges = new Dictionary<string, object>();
         private readonly Spy _spy;
 
         Spy ISpy.Spy => _spy;
@@ -122,17 +122,12 @@ namespace JazSharp.Spies
         /// <returns>The spy.</returns>
         public SpyThen ChangeParameterBefore(string parameterName, object value)
         {
-            var parameters = _spy.Method.GetParameters();
+            var hasParameterWithGivenName = _spy.Methods.SelectMany(x => x.GetParameters()).Any(x => x.Name == parameterName);
 
-            for (var i = 0; i < parameters.Length; i++)
+            if (hasParameterWithGivenName)
             {
-                var parameter = parameters[i];
-
-                if (parameter.Name == parameterName)
-                {
-                    _parameterChanges.Add(i, value);
-                    return this;
-                }
+                _parameterChanges.Add(parameterName, value);
+                return this;
             }
 
             throw new ArgumentException("parameterName does not match a parameter on the method.");
@@ -141,11 +136,6 @@ namespace JazSharp.Spies
         private SpyBehaviourBase AddReturnValue(object value)
         {
             ConstrainPreviousBehaviour();
-
-            if (_spy.Method.ReturnType == typeof(void))
-            {
-                throw new InvalidOperationException("Cannot specify a return value to use for an action.");
-            }
 
             var behaviour = new ReturnValueBehaviour(value);
             behaviour.ParameterChangesBeforeExecution = _parameterChanges;

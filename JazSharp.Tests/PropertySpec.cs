@@ -17,6 +17,30 @@ namespace JazSharp.Tests
 
                 Describe("with get and set", () =>
                 {
+                    It("should have it's spies overridden by new spies.", () =>
+                    {
+                        var spy = Jaz.SpyOnProperty(testSubject, nameof(testSubject.GetSetProp));
+                        spy.Getter.And.ReturnValue("a");
+                        spy.Setter.And.Throw<TestException>();
+
+                        Expect(testSubject.GetSetProp).ToBe("a");
+                        Expect(() => testSubject.GetSetProp = "x").ToThrow<TestException>();
+
+                        spy = Jaz.SpyOnProperty(testSubject, nameof(testSubject.GetSetProp));
+                        spy.Getter.And.ReturnValue("b");
+                        spy.Setter.And.DoNothing();
+
+                        Expect(testSubject.GetSetProp).ToBe("b");
+                        Expect(() => testSubject.GetSetProp = "y").Not.ToThrow<TestException>();
+
+                        spy = Jaz.SpyOnProperty(testSubject, nameof(testSubject.GetSetProp));
+                        spy.Getter.And.ReturnValue("c");
+                        spy.Setter.And.Throw<TestException>();
+
+                        Expect(testSubject.GetSetProp).ToBe("c");
+                        Expect(() => testSubject.GetSetProp = "z").ToThrow<TestException>();
+                    });
+
                     It("should call through by default.", () =>
                     {
                         Expect(testSubject.GetSetProp).ToBe("123");

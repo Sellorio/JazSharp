@@ -23,12 +23,12 @@ namespace JazSharp.Spies
         {
             if (propertyInfo.GetMethod != null)
             {
-                Getter = Spy.Create(propertyInfo.GetMethod, key);
+                Getter = Spy.Create(new[] { propertyInfo.GetMethod }, key);
             }
 
             if (propertyInfo.SetMethod != null)
             {
-                Setter = Spy.Create(propertyInfo.SetMethod, key);
+                Setter = Spy.Create(new[] { propertyInfo.SetMethod }, key);
             }
         }
 

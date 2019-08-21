@@ -1,4 +1,7 @@
-﻿namespace JazSharp.Tests
+﻿using System.Text;
+using System.Threading.Tasks;
+
+namespace JazSharp.Tests
 {
     public class OutputSpec : Spec
     {
@@ -11,9 +14,15 @@
                     Expect(true).ToBe(false);
                 });
 
-                It("should show output info correctly.", () =>
+                It("should show output info correctly.", output =>
                 {
-                    Jaz.CurrentTest.Output.AppendLine("This is some friendly text!");
+                    output.AppendLine("This is some friendly text!");
+                });
+
+                It("should show output info correctly.", output =>
+                {
+                    output.AppendLine("This is some friendly text!");
+                    return Task.CompletedTask;
                 });
             });
         }

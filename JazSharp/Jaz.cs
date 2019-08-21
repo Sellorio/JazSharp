@@ -1,14 +1,9 @@
 ﻿using JazSharp.Expectations;
-using JazSharp.Reflection;
 using JazSharp.Spies;
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using JazSharp.Testing;
-using System.Threading;
-using System.Text;
 using JazSharp.SpyLogic;
 
 [assembly: InternalsVisibleTo("JazSharp.TestAdapter")]
@@ -22,36 +17,6 @@ namespace JazSharp
     /// </summary>
     public static class Jaz
     {
-        internal static SemaphoreSlim CurrentTestSemaphore { get; } = new SemaphoreSlim(1, 1);
-
-        /// <summary>
-        /// The context for the currently executing test. This can be used to add custom messages
-        /// to the test's output.
-        /// </summary>
-        public static TestExecutionContext CurrentTest { get; internal set; }
-
-        internal static void SetupTestExecutionContext(string testDescription, StringBuilder output)
-        {
-            Spy.ClearAll();
-            CurrentTest = new TestExecutionContext(testDescription, output);
-        }
-
-        internal static void ClearTestExecutionContext()
-        {
-            CurrentTest = null;
-            Spy.ClearAll();
-        }
-
-        /// <summary>
-        /// Creates a spy on the specified method on the given instance. If the method has overloads,
-        /// use <see cref="SpyOn(object, string, Type[])"/>.
-        /// </summary>
-        /// <param name="object">The instance to spy on.</param>
-        /// <param name="nameOfMethod">The method to spy on. This can refer to a public or non-public method.</param>
-        /// <returns>The spy that was created.</returns>
-        public static Spy SpyOn(object @object, string nameOfMethod)
-            => SpyOn(@object, nameOfMethod, null);
-
         /// <summary>
         /// Creates a spy on the specified method on the given instance with the specified
         /// parameter types. This is used to specify a specific overload of the method to
@@ -59,9 +24,8 @@ namespace JazSharp
         /// </summary>
         /// <param name="object">The instance to spy on.</param>
         /// <param name="nameOfMethod">The method to spy on. This can refer to a public or non-public method.</param>
-        /// <param name="overloadParameters">The expected parameters on the method which are used to pick a specific overload.</param>
         /// <returns>The spy that was created.</returns>
-        public static Spy SpyOn(object @object, string nameOfMethod, Type[] overloadParameters)
+        public static Spy SpyOn(object @object, string nameOfMethod)
         {
             if (@object == null)
             {
@@ -77,35 +41,15 @@ namespace JazSharp
                 @object.GetType()
                     .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(x => x.Name == nameOfMethod)
-                    .ToList();
+                    .ToArray();
 
-            if (overloadParameters != null)
-            {
-                methods = methods.Where(x => x.GetParameters().Select(y => y.ParameterType).SequenceEqual(overloadParameters)).ToList();
-            }
-
-            if (methods.Count == 0)
+            if (methods.Length == 0)
             {
                 throw new ArgumentException("Name does not match any methods on the object.", nameof(nameOfMethod));
             }
 
-            if (methods.Count > 1)
-            {
-                throw new ArgumentException("Name matches more than one methods.", nameof(nameOfMethod));
-            }
-
-            return Spy.Create(methods[0], @object);
+            return Spy.Create(methods, @object);
         }
-
-        /// <summary>
-        /// Creates a spy on the specified static method on the given type. If the method has overloads,
-        /// use <see cref="SpyOn(Type, string, Type[])"/>.
-        /// </summary>
-        /// <param name="type">The type to spy on.</param>
-        /// <param name="nameOfMethod">The method to spy on. This can refer to a public or non-public method.</param>
-        /// <returns>The spy that was created.</returns>
-        public static Spy SpyOn(Type type, string nameOfMethod)
-            => SpyOn(type, nameOfMethod, null);
 
         /// <summary>
         /// Creates a spy on the specified static method on the given type with the specified
@@ -114,9 +58,8 @@ namespace JazSharp
         /// </summary>
         /// <param name="type">The type to spy on.</param>
         /// <param name="nameOfMethod">The method to spy on. This can refer to a public or non-public method.</param>
-        /// <param name="overloadParameters">The expected parameters on the method which are used to pick a specific overload.</param>
         /// <returns>The spy that was created.</returns>
-        public static Spy SpyOn(Type type, string nameOfMethod, Type[] overloadParameters)
+        public static Spy SpyOn(Type type, string nameOfMethod)
         {
             if (type == null)
             {
@@ -132,24 +75,14 @@ namespace JazSharp
                 type
                     .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(x => x.Name == nameOfMethod)
-                    .ToList();
+                    .ToArray();
 
-            if (overloadParameters != null)
-            {
-                methods = methods.Where(x => x.GetParameters().Select(y => y.ParameterType).SequenceEqual(overloadParameters)).ToList();
-            }
-
-            if (methods.Count == 0)
+            if (methods.Length == 0)
             {
                 throw new ArgumentException("Name does not match any static methods on the type.", nameof(nameOfMethod));
             }
 
-            if (methods.Count > 1)
-            {
-                throw new ArgumentException("Name matches more than one static methods.", nameof(nameOfMethod));
-            }
-
-            return Spy.Create(methods[0], string.Empty);
+            return Spy.Create(methods, string.Empty);
         }
 
         /// <summary>

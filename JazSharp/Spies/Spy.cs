@@ -14,7 +14,7 @@ namespace JazSharp.Spies
     {
         private static readonly List<Spy> _spies = new List<Spy>();
 
-        internal MethodInfo Method { get; }
+        internal MethodInfo[] Methods { get; }
         internal object Key { get; }
         internal List<ImmutableArray<object>> CallLog { get; } = new List<ImmutableArray<object>>();
         internal Queue<SpyBehaviourBase> Behaviours { get; } = new Queue<SpyBehaviourBase>();
@@ -31,9 +31,9 @@ namespace JazSharp.Spies
         /// </summary>
         public IReadOnlyList<SpyCall> Calls => ImmutableArray.CreateRange(CallLog.Select(x => new SpyCall(x)));
 
-        private Spy(MethodInfo method, object key)
+        private Spy(MethodInfo[] methods, object key)
         {
-            Method = method;
+            Methods = methods;
             Key = key;
 
             // setup up spy to only return a default value forever
@@ -50,21 +50,24 @@ namespace JazSharp.Spies
             _spies.Remove(this);
         }
 
-        internal static Spy Create(MethodInfo method, object key)
+        internal static Spy Create(MethodInfo[] methods, object key)
         {
-            method = GetRootDefinition(method);
+            methods = methods.Select(GetRootDefinitions).ToArray();
 
-            Get(method, key)?.Dispose();
+            foreach (var method in methods)
+            {
+                Get(method, key)?.Dispose();
+            }
 
-            var spy = new Spy(method, key);
+            var spy = new Spy(methods, key);
             _spies.Add(spy);
             return spy;
         }
 
         internal static Spy Get(MethodInfo method, object key)
         {
-            method = GetRootDefinition(method);
-            return _spies.FirstOrDefault(x => x.Method == method && x.Key == key);
+            method = GetRootDefinitions(method);
+            return _spies.FirstOrDefault(x => x.Methods.Contains(method) && x.Key == key);
         }
 
         internal static void ClearAll()
@@ -72,7 +75,7 @@ namespace JazSharp.Spies
             _spies.Clear();
         }
 
-        private static MethodInfo GetRootDefinition(MethodInfo method)
+        private static MethodInfo GetRootDefinitions(MethodInfo method)
         {
             method = method.IsGenericMethod ? method.GetGenericMethodDefinition() : method;
             method = method.GetBaseDefinition();

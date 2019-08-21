@@ -42,28 +42,15 @@ namespace JazSharp.Spies
         /// <returns>The current spy configuration object.</returns>
         public SpyWithReturnValues ChangeParameter(string parameterName, object value)
         {
-            var parameters = _spy.Method.GetParameters();
+            var matchingParameters = _spy.Methods.SelectMany(x => x.GetParameters().Where(y => y.Name == parameterName)).ToList();
 
-            for (var i = 0; i < parameters.Length; i++)
+            if (matchingParameters.Count == 0)
             {
-                var parameter = parameters[i];
-
-                if (parameter.Name == parameterName)
-                {
-                    if (!parameter.ParameterType.IsByRef)
-                    {
-                        throw new InvalidOperationException(
-                            $"Changing a parameter's value after spy execution only makes sense for ref or out parameters. " +
-                            $"If you intended to change a parameter value before call-through, call {nameof(ChangeParameter)} " +
-                            $"immediately after {nameof(Spy.And)}.");
-                    }
-
-                    _returnValuesBehaviours.ForEach(x => x.ParameterChangesAfterExecution.Add(i, value));
-                    return this;
-                }
+                throw new ArgumentException("parameterName does not match a parameter on the method.");
             }
 
-            throw new ArgumentException("parameterName does not match a parameter on the method.");
+            _returnValuesBehaviours.ForEach(x => x.ParameterChangesAfterExecution.Add(parameterName, value));
+            return this;
         }
     }
 }

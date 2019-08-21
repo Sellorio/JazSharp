@@ -79,11 +79,6 @@ namespace JazSharp.Expectations
                 parameters = new object[0];
             }
 
-            if (parameters.Length != _spy.Method.GetParameters().Length)
-            {
-                throw new ArgumentException("Incorrect number of parameters specified for ToHaveBeenCalled.", nameof(parameters));
-            }
-
             var matchFound = false;
 
             foreach (var call in _spy.CallLog)
