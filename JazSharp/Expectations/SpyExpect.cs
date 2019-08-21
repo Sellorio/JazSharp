@@ -85,7 +85,7 @@ namespace JazSharp.Expectations
             {
                 var isMatch = true;
 
-                for (var i = 0; i < parameters.Length && isMatch; i++)
+                for (var i = 0; i < parameters.Length && i < call.Length && isMatch; i++)
                 {
                     var path = "p" + (i + 1);
                     var left = parameters[i];

@@ -15,6 +15,7 @@
     - [What are spies?](#whatAreSpies)
     - [Behaviours](#behaviours)
     - [Sequences and Quantifiers](#sequences)
+    - [Overloads](#overloads)
     - [Properties](#propertySpies)
     - [Create Spy](#createSpy)
     - [Calls](#calls)
@@ -252,11 +253,23 @@ only focused tests will be executed.
 <a id="output"></a>
 #### Custom Output
 
-A test can add to the output log for a test by writing to the output `StringBuilder` in
-the current test context:
+A test can add to the output log for a test by writing to the output `StringBuilder`. This
+is an optional first parameter that can be added to your test methods:
 
 ```C#
-Jaz.CurrentTest.Output.AppendLine("This will appear in the test output.");
+class FooSpec : Spec
+{
+	public FooSpec()
+	{
+		Describe<Foo>(() =>
+		{
+			It("should x y and z.", output => // output is of type StringBuilder
+			{
+				output.WriteLine("This is some extra test log output!");
+			});
+		});
+	}
+}
 ```
 
 <a id="spying"></a>
@@ -287,14 +300,6 @@ You can also spy on static methods.
 ```C#
 var spy = Jaz.SpyOn(typeof(string), nameof(string.IsNullOrEmpty));
 var result = string.IsNullOrEmpty(null); // result is false
-```
-
-If a method has multiple overrides, you can specify the parameters of the overload you want
-to spy on.
-
-```C#
-var spy = Jaz.SpyOn(typeof(int), nameof(int.Parse), new[] { typeof(string) });
-var result = int.Parse("1"); // result is 0
 ```
 
 To keep the spy and execute the method's original implementation, use the `CallThrough` method.
@@ -415,6 +420,37 @@ The available quantifiers are:
 - `Twice()`: the behaviour executes twice.
 - `Times(x)`: the behaviour executes a given number of times.
 - `Forever()`: the behaviour executes forever.
+
+<a id="overloads"></a>
+#### Overloads
+
+If a method has more than one overload, all overloads will be spied on. The below
+test demonstrates this.
+
+```C#
+class FooSpec
+{
+	public FooSpec() : Spec
+	{
+		Describe<Foo>(() =>
+		{
+			It("should spy on all overloads.", () =>
+			{
+				var spy = Jaz.SpyOn(typeof(Enumerable), nameof(Enumerable.Any));
+				var test = new[] { 1, 2, 3 };
+
+				Expect(test.Any()).ToBeFalse();
+				Expect(test.Any(x => x == 2)).ToBeFalse();
+				
+				Expect(spy).ToHaveBeenCalledWith(test);
+				Expect(spy).ToHaveBeenCalledWith(test, Jaz.InstanceOf<Func<int, bool>>());
+			});
+		});
+	}
+}
+```
+
+This test will pass.
 
 <a id="propertySpies"></a>
 #### Properties
