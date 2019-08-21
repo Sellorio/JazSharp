@@ -19,8 +19,11 @@ namespace JazSharp.Expectations
             typeof(DateTime)
         };
 
-        internal static bool DeepCompare(object left, object right, ref string path)
+        internal static bool DeepCompare(object left, object right, ref string path, out object mismatchingLeft, out object mismatchingRight)
         {
+            mismatchingLeft = left;
+            mismatchingRight = right;
+
             if (left == null)
             {
                 return right == null || right is AnyMatcher anyMatcher && anyMatcher.AllowNull;
@@ -40,8 +43,8 @@ namespace JazSharp.Expectations
                 CheckEquals(left, right) ??
                 CheckNotBasicType(leftType) ??
                 CheckNotBasicType(rightType) ??
-                CheckExactEnumerable(left, leftType, right, rightType, ref path) ??
-                CheckExactProperties(left, leftType, right, rightType, ref path) ??
+                CheckExactEnumerable(left, leftType, right, rightType, ref path, ref mismatchingLeft, ref mismatchingRight) ??
+                CheckExactProperties(left, leftType, right, rightType, ref path, ref mismatchingLeft, ref mismatchingRight) ??
                 true;
 
             return result;
@@ -96,7 +99,7 @@ namespace JazSharp.Expectations
             return _basicTypes.Contains(type) ? (bool?)false : null;
         }
 
-        private static bool? CheckExactEnumerable(object object1, Type type1, object object2, Type type2, ref string path)
+        private static bool? CheckExactEnumerable(object object1, Type type1, object object2, Type type2, ref string path, ref object mismatchingLeft, ref object mismatchingRight)
         {
             if (typeof(IEnumerable).IsAssignableFrom(type1))
             {
@@ -117,7 +120,9 @@ namespace JazSharp.Expectations
                 for (var i = 0; i < leftList.Count; i++)
                 {
                     var itemPath = path + "[" + i + "]";
-                    var result = DeepCompare(leftList[i], rightList[i], ref itemPath);
+                    var item1 = leftList[i];
+                    var item2 = rightList[i];
+                    var result = DeepCompare(item1, item2, ref itemPath, out mismatchingLeft, out mismatchingRight);
 
                     if (!result)
                     {
@@ -173,7 +178,7 @@ namespace JazSharp.Expectations
             return null;
         }
 
-        private static bool? CheckExactProperties(object object1, Type type1, object object2, Type type2, ref string path)
+        private static bool? CheckExactProperties(object object1, Type type1, object object2, Type type2, ref string path, ref object mismatchingLeft, ref object mismatchingRight)
         {
             var properties1 = type1.GetProperties().OrderBy(x => x.Name).ToList();
             var properties2 = type2.GetProperties().OrderBy(x => x.Name).ToList();
@@ -187,7 +192,9 @@ namespace JazSharp.Expectations
             for (var i = 0; i < properties1.Count; i++)
             {
                 var childPath = path + "." + properties1[i].Name;
-                var result = DeepCompare(properties1[i].GetValue(object1), properties2[i].GetValue(object2), ref childPath);
+                var value1 = properties1[i].GetValue(object1);
+                var value2 = properties2[i].GetValue(object2);
+                var result = DeepCompare(value1, value2, ref childPath, out mismatchingLeft, out mismatchingRight);
 
                 if (!result)
                 {

@@ -14,9 +14,9 @@ namespace JazSharp.Testing.AssemblyLoading
 
         internal static AssemblyContext Current { get; private set; }
 
-        internal AssemblyContext()
+        internal AssemblyContext(string[] dllSearchPaths)
         {
-            _assemblyLoadContext = new MyAssemblyLoadContext();
+            _assemblyLoadContext = new MyAssemblyLoadContext(dllSearchPaths);
         }
 
         internal void InitialiseDependencyResolvers()
@@ -57,7 +57,7 @@ namespace JazSharp.Testing.AssemblyLoading
         
         internal static void SetupCurrent(Dictionary<string, Assembly> loadedAssemblies)
         {
-            Current = new AssemblyContext()
+            Current = new AssemblyContext(null)
             {
                 LoadedAssemblies = loadedAssemblies
             };

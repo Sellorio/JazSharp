@@ -96,7 +96,7 @@ namespace JazSharp.Expectations
                     var left = parameters[i];
                     var right = call[i];
 
-                    isMatch = DeepCompareHelper.DeepCompare(left, right, ref path);
+                    isMatch = DeepCompareHelper.DeepCompare(left, right, ref path, out _, out _);
                 }
 
                 if (isMatch)

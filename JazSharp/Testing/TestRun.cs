@@ -248,7 +248,7 @@ namespace JazSharp.Testing
                 }
             }
 
-            var assemblyContext = new AssemblyContext();
+            var assemblyContext = new AssemblyContext(temporaryDirectories.ToArray());
             var executionReadyAssemblies = sources.Select(assemblyContext.Load).ToList();
             assemblyContext.InitialiseDependencyResolvers();
             var jazSharpAssembly = assemblyContext.LoadByName(typeof(Jaz).Assembly.GetName());

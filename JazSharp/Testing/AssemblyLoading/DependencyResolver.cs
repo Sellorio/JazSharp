@@ -26,7 +26,7 @@ namespace JazSharp.Testing.AssemblyLoading
                     new ICompilationAssemblyResolver[]
                     {
                         new AppBaseCompilationAssemblyResolver(Path.GetDirectoryName(assembly.Location)),
-                        new ReferenceAssemblyPathResolver(),
+                        //new ReferenceAssemblyPathResolver(),
                         new PackageCompilationAssemblyResolver()
                     });
 

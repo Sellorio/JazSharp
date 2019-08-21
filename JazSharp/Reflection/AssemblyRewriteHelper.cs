@@ -108,9 +108,9 @@ namespace JazSharp.Reflection
 
                     if (replacement != null)
                     {
-                        var firstInsertedInstruction = Instruction.Create(OpCodes.Ldtoken, calledMethod);
+                        var firstInsertedInstruction = Instruction.Create(OpCodes.Ldtoken, method.Module.ImportReference(calledMethod));
                         ilProcessor.InsertBefore(instruction, firstInsertedInstruction);
-                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, calledMethod.DeclaringType));
+                        ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Ldtoken, method.Module.ImportReference(calledMethod.DeclaringType)));
                         ilProcessor.InsertBefore(instruction, Instruction.Create(OpCodes.Call, getMethodByTokenMethod));
 
                         i += 3; // skip past newly inserted instructions
@@ -189,17 +189,17 @@ namespace JazSharp.Reflection
 
                     if (isFunc)
                     {
-                        genericMethod.GenericArguments.Add(ResolveTypeIfGeneric(calledMethod, calledMethod.ReturnType));
+                        genericMethod.GenericArguments.Add(method.Module.ImportReference(ResolveTypeIfGeneric(calledMethod, calledMethod.ReturnType)));
                     }
 
                     if (!isStatic)
                     {
-                        genericMethod.GenericArguments.Add(calledMethod.DeclaringType);
+                        genericMethod.GenericArguments.Add(method.Module.ImportReference(calledMethod.DeclaringType));
                     }
 
                     foreach (var parameter in calledMethod.Parameters)
                     {
-                        genericMethod.GenericArguments.Add(ResolveTypeIfGeneric(calledMethod, parameter.ParameterType));
+                        genericMethod.GenericArguments.Add(method.Module.ImportReference(ResolveTypeIfGeneric(calledMethod, parameter.ParameterType)));
                     }
 
                     return Instruction.Create(OpCodes.Call, genericMethod);
@@ -524,7 +524,7 @@ namespace JazSharp.Reflection
                     throw new InvalidOperationException("Failed to resolve generic parameter when rewriting assembly.");
                 }
 
-                return genericArgSource.GenericArguments[genericParameterIndex];
+                return method.Module.ImportReference(genericArgSource.GenericArguments[genericParameterIndex]);
             }
             else if (type is GenericInstanceType genericType)
             {
@@ -537,12 +537,12 @@ namespace JazSharp.Reflection
                     result.GenericArguments.Add(ResolveTypeIfGeneric(method, arg));
                 }
 
-                return result;
+                return method.Module.ImportReference(result);
             }
             else if (type is ArrayType arrayType)
             {
                 var innerType = ResolveTypeIfGeneric(method, type.GetElementType());
-                return new ArrayType(innerType, arrayType.Rank);
+                return new ArrayType(method.Module.ImportReference(innerType), arrayType.Rank);
             }
 
             return type;
@@ -593,7 +593,7 @@ namespace JazSharp.Reflection
                 return new ArrayType(innerType, arrayType.Rank);
             }
 
-            return type;
+            return method.Module.ImportReference(type);
         }
 
         private static int IndexOfItem<TObject>(IEnumerable<TObject> enumerable, Func<TObject, bool> matcher)

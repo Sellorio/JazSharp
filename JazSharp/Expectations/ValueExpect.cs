@@ -41,11 +41,11 @@ namespace JazSharp.Expectations
         public void ToEqual(object expected)
         {
             var path = "value";
-            var areEqual = DeepCompareHelper.DeepCompare(expected, _value, ref path);
+            var areEqual = DeepCompareHelper.DeepCompare(expected, _value, ref path, out var mismatchingLeft, out var mismatchingRight);
 
             ThrowIfFailed(
                 areEqual,
-                "Expected values to be equal but they differ at path " + path + ".",
+                $"Expected {SafeToString(mismatchingRight)} to be equal to {SafeToString(mismatchingLeft)} at path " + path + ".",
                 "Expected values to differ but they are equal.");
         }
 

@@ -66,7 +66,7 @@ namespace JazSharp.Testing
         {
             var sourcesAsList = sources.ToList();
 
-            var assemblyContext = new AssemblyContext();
+            var assemblyContext = new AssemblyContext(null);
             IEnumerable<Test> tests;
 
             try
