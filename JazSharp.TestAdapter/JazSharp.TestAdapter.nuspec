@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>JazSharp.TestAdapter</id>
-    <version>1.0.0-beta.3</version>
+    <version>1.0.0-rc</version>
     <title>JazSharp</title>
     <authors>Sea Millo</authors>
     <owners>Sea Millo</owners>
@@ -17,7 +17,7 @@
     <copyright>Copyright 2019</copyright>
     <tags>C# csharp jasmine unit testing mock mocking spy</tags>
     <dependencies>
-      <dependency id="JazSharp" version="1.0.0-beta.1" />
+      <dependency id="JazSharp" version="1.0.0-rc" />
       <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" />
       <dependency id="Microsoft.TestPlatform.ObjectModel" version="16.2.0" />
       <dependency id="System.ComponentModel.Composition" version="4.5.0" />
