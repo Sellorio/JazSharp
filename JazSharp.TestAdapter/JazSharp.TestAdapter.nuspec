@@ -17,7 +17,7 @@
     <copyright>Copyright 2019</copyright>
     <tags>C# csharp jasmine unit testing mock mocking spy</tags>
     <dependencies>
-      <dependency id="JazSharp" version="1.0.0-rc" />
+      <dependency id="JazSharp" version="1.0.0-rc.2" />
       <dependency id="Microsoft.NET.Test.Sdk" version="16.2.0" />
       <dependency id="Microsoft.TestPlatform.ObjectModel" version="16.2.0" />
       <dependency id="System.ComponentModel.Composition" version="4.5.0" />
