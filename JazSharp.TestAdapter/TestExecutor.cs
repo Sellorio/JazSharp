@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using VisualStudioTestResult = Microsoft.VisualStudio.TestPlatform.ObjectModel.TestResult;
 
 namespace JazSharp.TestAdapter
@@ -47,27 +48,35 @@ namespace JazSharp.TestAdapter
             ExecuteTestRun(testCollection, frameworkHandle, testCollection.Tests.ToDictionary(x => x, x => x.ToTestCase()));
         }
 
+        [HandleProcessCorruptedStateExceptions]
         private void ExecuteTestRun(TestCollection testCollection, IFrameworkHandle frameworkHandle, Dictionary<Test, TestCase> testMapping)
         {
-            _testRun = testCollection.CreateTestRun();
-
-            _testRun.TestCompleted += result =>
+            try
             {
-                var vsResult = new VisualStudioTestResult(testMapping[result.Test])
+
+                _testRun = testCollection.CreateTestRun();
+
+                _testRun.TestCompleted += result =>
                 {
-                    Outcome = OutcomeFromResult(result.Result),
-                    Duration = result.Duration,
-                    ErrorMessage = result.Output,
-                    ErrorStackTrace = GetCombinedStackTrace(result.Exception)
+                    var vsResult = new VisualStudioTestResult(testMapping[result.Test])
+                    {
+                        Outcome = OutcomeFromResult(result.Result),
+                        Duration = result.Duration,
+                        ErrorMessage = result.Output,
+                        ErrorStackTrace = GetCombinedStackTrace(result.Exception)
+                    };
+
+                    vsResult.Messages.Add(new TestResultMessage(TestResultMessage.StandardOutCategory, result.Output));
+                    vsResult.ErrorStackTrace = GetCombinedStackTrace(result.Exception);
+
+                    frameworkHandle.RecordResult(vsResult);
                 };
 
-                vsResult.Messages.Add(new TestResultMessage(TestResultMessage.StandardOutCategory, result.Output));
-                vsResult.ErrorStackTrace = GetCombinedStackTrace(result.Exception);
-
-                frameworkHandle.RecordResult(vsResult);
-            };
-
-            _testRun.ExecuteAsync().GetAwaiter().GetResult();
+                _testRun.ExecuteAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private static TestOutcome OutcomeFromResult(Testing.TestResult result)

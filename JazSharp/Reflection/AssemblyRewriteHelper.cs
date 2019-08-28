@@ -79,7 +79,7 @@ namespace JazSharp.Reflection
 
         private static void RewriteMethod(MethodDefinition method, Dictionary<MethodDefinition, MethodDefinition> byRefWrappers)
         {
-            if (method.IsPInvokeImpl)
+            if (method.IsPInvokeImpl || IsDelegate(method.DeclaringType))
             {
                 return;
             }
@@ -589,7 +589,7 @@ namespace JazSharp.Reflection
             }
             else if (type is ArrayType arrayType)
             {
-                var innerType = ReplaceGenericParameterReferences(method, type, newParameterSource);
+                var innerType = ReplaceGenericParameterReferences(method, arrayType.GetElementType(), newParameterSource);
                 return new ArrayType(innerType, arrayType.Rank);
             }
 
@@ -611,6 +611,13 @@ namespace JazSharp.Reflection
             }
 
             return -1;
+        }
+
+        private static bool IsDelegate(TypeDefinition typeDefinition)
+        {
+            return
+                typeDefinition != null
+                && (typeDefinition.FullName == typeof(Delegate).FullName || IsDelegate(typeDefinition.BaseType?.Resolve()));
         }
     }
 }
