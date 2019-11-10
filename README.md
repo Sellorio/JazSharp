@@ -2,6 +2,7 @@
 
 ## Contents
 
+- [Prerequisites](#prereqs)
 - [Introduction](#intro)
 - [User Guide](#userGuide)
   - [Installation](#installation)
@@ -28,6 +29,11 @@
 - [Developer Guide](#developerGuide)
   - [Build and run](#buildAndRun)
   - [Map](#devMap)
+
+<a id="prereqs"></a>
+## Prerequisites
+
+- .NET Core 2.2 Runtime
 
 <a id="intro"></a>
 ## Introduction

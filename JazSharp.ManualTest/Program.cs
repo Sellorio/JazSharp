@@ -10,7 +10,7 @@ namespace JazSharp.ManualTest
         {
             var info = AssemblyDefinition.ReadAssembly(Assembly.GetExecutingAssembly().Location).MainModule.GetType("JazSharp.ManualTest.Program").Methods;
             
-            using (var testCollection = TestCollection.FromSources(new[] { @"C:\Users\seamillo\source\repos\JazSharp\JazSharp.Tests\bin\Debug\netcoreapp2.2\JazSharp.Tests.dll" }))
+            using (var testCollection = TestCollection.FromSources(new[] { typeof(Program).Assembly.Location.Replace("ManualTest", "Tests") }))
             using (var testRun = testCollection.CreateTestRun())
             {
                 var result = testRun.ExecuteAsync().Result;
