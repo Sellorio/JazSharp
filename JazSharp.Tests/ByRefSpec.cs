@@ -373,7 +373,7 @@ namespace JazSharp.Tests
                 public static bool TryConvert<TTarget>(TValue value, out TTarget result)
                 {
                     result = OtherTestSubject<TTarget>.Convert(value);
-                    return result != default;
+                    return result != null && !result.Equals(default);
                 }
             }
         }

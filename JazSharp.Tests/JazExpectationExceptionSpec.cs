@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace JazSharp.Tests
+﻿namespace JazSharp.Tests
 {
     public class JazExpectationExceptionSpec : Spec
     {
