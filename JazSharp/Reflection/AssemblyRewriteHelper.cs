@@ -52,6 +52,10 @@ namespace JazSharp.Reflection
                     assembly.Write(new WriterParameters { WriteSymbols = true });
                 }
             }
+            catch (SymbolsNotFoundException)
+            {
+                // cant find
+            }
             catch (BadImageFormatException)
             {
                 // native dll, no rewrite required

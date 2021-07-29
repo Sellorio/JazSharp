@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>7.3</LangVersion>
     <Version>1.0.0-beta1</Version>
     <Description>JazSharp is a unit testing and method-level mocking framework heavily inspired by Jasmine (JavaScript). Major benefits of using this framework over others is that you can mock non-virtual and static calls removing interfaces and dependency injection as requirements for effective unit testing.</Description>
@@ -23,9 +23,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="2.1.0" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.4" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="5.0.0" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
   </ItemGroup>
 
